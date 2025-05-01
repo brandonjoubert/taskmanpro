@@ -8,9 +8,10 @@ interface CompletedTasksViewProps {
   tasks: Task[];
   onToggleComplete?: (id: string) => void; // Mark as incomplete
   onDeleteTask?: (id: string) => void; // Allow deletion
+  currencySymbol: string; // Added prop
 }
 
-export function CompletedTasksView({ tasks, onToggleComplete, onDeleteTask }: CompletedTasksViewProps) {
+export function CompletedTasksView({ tasks, onToggleComplete, onDeleteTask, currencySymbol }: CompletedTasksViewProps) {
   return (
     <div className="p-4 h-full">
       <Card className="flex flex-col h-full shadow-md">
@@ -29,6 +30,7 @@ export function CompletedTasksView({ tasks, onToggleComplete, onDeleteTask }: Co
                   onToggleComplete={onToggleComplete} // Re-use toggle to mark as incomplete
                   onEdit={undefined} // No editing directly from completed view
                   onDelete={onDeleteTask}
+                  currencySymbol={currencySymbol} // Pass down
                 />
               ))
             )}

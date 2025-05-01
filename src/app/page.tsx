@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -63,8 +64,17 @@ export default function Home() {
    // NOTE: This simple currency setting is not persisted.
    // For persistence, you'd need localStorage or a backend.
    const handleCurrencyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-       setCurrencySymbol(event.target.value || '$'); // Default back to '$' if empty
+       // Allow the input to be temporarily empty while typing
+       setCurrencySymbol(event.target.value);
    }
+
+   // Optional: Apply default if empty on blur or when closing popover
+   const handleCurrencyBlur = () => {
+        if (!currencySymbol.trim()) {
+            setCurrencySymbol(CURRENCY_SYMBOL); // Revert to default if empty
+        }
+   }
+
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -106,6 +116,7 @@ export default function Home() {
                      id="currency-symbol"
                      value={currencySymbol}
                      onChange={handleCurrencyChange}
+                     onBlur={handleCurrencyBlur} // Apply default on blur if needed
                      maxLength={3} // Limit symbol length
                      className="h-8"
                    />
@@ -147,15 +158,14 @@ export default function Home() {
                      onToggleComplete={handleToggleComplete}
                      onEditTask={handleOpenModal}
                      onDeleteTask={handleDeleteTask}
-                     // Pass currencySymbol if needed by child components, though constants might be enough
-                     // currencySymbol={currencySymbol}
+                     currencySymbol={currencySymbol} // Pass current symbol down
                  />
               ) : (
                  <CompletedTasksView
                     tasks={completedTasks}
                     onToggleComplete={handleToggleComplete}
                     onDeleteTask={handleDeleteTask}
-                    // currencySymbol={currencySymbol}
+                    currencySymbol={currencySymbol} // Pass current symbol down
                   />
               )
          )}
@@ -167,9 +177,9 @@ export default function Home() {
         onClose={handleCloseModal}
         onSubmit={handleFormSubmit}
         initialTaskData={editingTask}
-        // Pass currencySymbol if needed by the form
-        // currencySymbol={currencySymbol}
+        currencySymbol={currencySymbol} // Pass current symbol to the modal
       />
     </div>
   );
 }
+

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { Task } from '@/interfaces/task';
@@ -19,6 +20,7 @@ interface TaskCardProps {
   onToggleComplete?: (id: string) => void;
   onEdit?: (task: Task) => void;
   onDelete?: (id: string) => void;
+  currencySymbol: string; // Added prop
 }
 
 // Function to determine badge color based on riskValue
@@ -29,7 +31,7 @@ const getRiskValueColorClass = (riskValue: number): string => {
     return 'bg-yellow-200 text-yellow-900 dark:bg-yellow-900/40 dark:text-yellow-100 border-yellow-300 dark:border-yellow-800/60'; // Low Risk
 };
 
-export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardProps) {
+export function TaskCard({ task, onToggleComplete, onEdit, onDelete, currencySymbol = CURRENCY_SYMBOL }: TaskCardProps) { // Default added
   // Removed riskConfig as we now use riskValue directly
   const [isOverdue, setIsOverdue] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
@@ -111,7 +113,7 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
                                </span>
                            </TooltipTrigger>
                            <TooltipContent side="bottom" align="start">
-                               <p>Est. Impact: {CURRENCY_SYMBOL}{task.monetaryImpact.toLocaleString()}</p>
+                               <p>Est. Impact: {currencySymbol}{task.monetaryImpact.toLocaleString()}</p> {/* Use currencySymbol prop */}
                                <p className="text-xs text-muted-foreground">({impactScoreDetails.label}, Score: {impactScoreDetails.score})</p>
                            </TooltipContent>
                        </Tooltip>

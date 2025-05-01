@@ -1,3 +1,4 @@
+
 'use client';
 
 import type React from 'react';
@@ -34,9 +35,16 @@ interface TaskFormProps {
   initialData?: Task | null; // Task for editing, null/undefined for creating
   onCancel?: () => void;
   submitButtonText?: string;
+  currencySymbol?: string; // Added prop
 }
 
-export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonText = "Save Task" }: TaskFormProps) {
+export function TaskForm({
+    onSubmit,
+    initialData = null,
+    onCancel,
+    submitButtonText = "Save Task",
+    currencySymbol = CURRENCY_SYMBOL // Default added
+}: TaskFormProps) {
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
@@ -215,11 +223,11 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
             name="monetaryImpact"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Monetary Impact ({CURRENCY_SYMBOL}) *</FormLabel>
+                <FormLabel>Monetary Impact ({currencySymbol}) *</FormLabel> {/* Use currencySymbol prop */}
                 <FormControl>
                    <div className="relative">
                       <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
-                          {CURRENCY_SYMBOL}
+                          {currencySymbol} {/* Use currencySymbol prop */}
                       </span>
                       <Input
                         type="number"

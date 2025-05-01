@@ -1,3 +1,4 @@
+
 import type { Task } from '@/interfaces/task';
 import type { Quadrant } from '@/lib/constants';
 import { quadrantConfig } from '@/lib/constants';
@@ -11,9 +12,10 @@ interface QuadrantColumnProps {
   onToggleComplete?: (id: string) => void;
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (id: string) => void;
+  currencySymbol: string; // Added prop
 }
 
-export function QuadrantColumn({ quadrant, tasks, onToggleComplete, onEditTask, onDeleteTask }: QuadrantColumnProps) {
+export function QuadrantColumn({ quadrant, tasks, onToggleComplete, onEditTask, onDeleteTask, currencySymbol }: QuadrantColumnProps) {
   const config = quadrantConfig[quadrant];
   // Explicitly filter for incomplete tasks just to be safe, though parent should handle this
   const incompleteTasksInQuadrant = tasks.filter(task => !task.isComplete);
@@ -36,6 +38,7 @@ export function QuadrantColumn({ quadrant, tasks, onToggleComplete, onEditTask, 
                   onToggleComplete={onToggleComplete}
                   onEdit={onEditTask}
                   onDelete={onDeleteTask}
+                  currencySymbol={currencySymbol} // Pass down
                  />
              ))
             )}
@@ -44,3 +47,4 @@ export function QuadrantColumn({ quadrant, tasks, onToggleComplete, onEditTask, 
     </Card>
   );
 }
+

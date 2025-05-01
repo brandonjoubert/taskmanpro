@@ -1,3 +1,4 @@
+
 import type { Task } from '@/interfaces/task';
 import { Quadrant } from '@/lib/constants';
 import { QuadrantColumn } from './quadrant-column';
@@ -7,9 +8,10 @@ interface MatrixViewProps {
   onToggleComplete?: (id: string) => void;
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (id: string) => void;
+  currencySymbol: string; // Added prop
 }
 
-export function MatrixView({ tasks, onToggleComplete, onEditTask, onDeleteTask }: MatrixViewProps) {
+export function MatrixView({ tasks, onToggleComplete, onEditTask, onDeleteTask, currencySymbol }: MatrixViewProps) {
   const getTasksForQuadrant = (quadrant: Quadrant) => {
     // Filter already happened in useTasks, but double-check just in case
     return tasks.filter((task) => task.quadrant === quadrant && !task.isComplete);
@@ -23,6 +25,7 @@ export function MatrixView({ tasks, onToggleComplete, onEditTask, onDeleteTask }
         onToggleComplete={onToggleComplete}
         onEditTask={onEditTask}
         onDeleteTask={onDeleteTask}
+        currencySymbol={currencySymbol} // Pass down
       />
       <QuadrantColumn
         quadrant={Quadrant.Decide}
@@ -30,6 +33,7 @@ export function MatrixView({ tasks, onToggleComplete, onEditTask, onDeleteTask }
         onToggleComplete={onToggleComplete}
         onEditTask={onEditTask}
         onDeleteTask={onDeleteTask}
+        currencySymbol={currencySymbol} // Pass down
        />
       <QuadrantColumn
         quadrant={Quadrant.Delegate}
@@ -37,6 +41,7 @@ export function MatrixView({ tasks, onToggleComplete, onEditTask, onDeleteTask }
         onToggleComplete={onToggleComplete}
         onEditTask={onEditTask}
         onDeleteTask={onDeleteTask}
+        currencySymbol={currencySymbol} // Pass down
        />
       <QuadrantColumn
         quadrant={Quadrant.Delete}
@@ -44,7 +49,9 @@ export function MatrixView({ tasks, onToggleComplete, onEditTask, onDeleteTask }
         onToggleComplete={onToggleComplete}
         onEditTask={onEditTask}
         onDeleteTask={onDeleteTask}
+        currencySymbol={currencySymbol} // Pass down
        />
     </div>
   );
 }
+

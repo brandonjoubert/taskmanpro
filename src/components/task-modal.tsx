@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -11,14 +12,14 @@ import {
 import { TaskForm } from './task-form';
 import type { TaskFormData } from './task-form-schema';
 import type { Task } from '@/interfaces/task';
-// import { CURRENCY_SYMBOL } from '@/lib/constants'; // Import if needed
+import { CURRENCY_SYMBOL } from '@/lib/constants'; // Import default currency symbol
 
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: TaskFormData) => void;
   initialTaskData?: Task | null;
-  // currencySymbol?: string; // Optional: If form needs dynamic currency
+  currencySymbol?: string; // Optional: If form needs dynamic currency
 }
 
 export function TaskModal({
@@ -26,7 +27,7 @@ export function TaskModal({
     onClose,
     onSubmit,
     initialTaskData,
-    // currencySymbol = CURRENCY_SYMBOL // Default or passed prop
+    currencySymbol = CURRENCY_SYMBOL // Default or passed prop
 }: TaskModalProps) {
   const isEditing = !!initialTaskData;
   const title = isEditing ? "Edit Task" : "Add New Task";
@@ -58,8 +59,7 @@ export function TaskModal({
              initialData={initialTaskData}
              onCancel={onClose}
              submitButtonText={isEditing ? "Save Changes" : "Add Task"}
-             // Pass currency symbol if needed by TaskForm implementation
-             // currencySymbol={currencySymbol}
+             currencySymbol={currencySymbol} // Pass currency symbol to TaskForm
             />
         </div>
       </DialogContent>
