@@ -8,7 +8,7 @@ import {
     KeyboardSensor,
     useSensor,
     useSensors,
-    closestCorners,
+    closestCenter, // Changed from closestCorners
 } from '@dnd-kit/core';
 import type { Task } from '@/interfaces/task';
 import type { TaskFormData } from '@/components/task-form-schema';
@@ -55,13 +55,20 @@ export function MatrixView({
       setActiveId(null);
       const { active, over } = event;
 
+      // Ensure 'over' exists before trying to access its id
+      if (!over) {
+          console.log("Drag ended outside a droppable area.");
+          return;
+      }
+
       if (active && over && active.id !== over.id) {
           const taskId = active.id as string;
-          const targetQuadrant = over.id as Quadrant; // Assuming over.id is the Quadrant enum value
+          const targetQuadrant = over.id as Quadrant; // Assuming over.id is the Quadrant enum value from the QuadrantColumn
 
           const taskToMove = tasks.find(task => task.id === taskId);
 
           // Check if the target is a valid quadrant and different from the current one
+          // The check Object.values(Quadrant).includes(targetQuadrant) ensures over.id is a quadrant ID, not a task ID
           if (taskToMove && Object.values(Quadrant).includes(targetQuadrant) && taskToMove.quadrant !== targetQuadrant) {
               console.log(`Moving task ${taskId} from ${taskToMove.quadrant} to ${targetQuadrant}`);
 
@@ -83,15 +90,24 @@ export function MatrixView({
               // Call the updateTask function passed from the parent
               updateTask(updatedTaskData);
           } else {
-              console.log("Drag end condition not met for update:", { taskId, targetQuadrant, taskQuadrant: taskToMove?.quadrant });
+              // Log why the update didn't happen if it wasn't a valid quadrant move
+               if (taskToMove && !Object.values(Quadrant).includes(targetQuadrant)) {
+                    console.log(`Drag ended over an invalid target (not a Quadrant): ${targetQuadrant}`);
+               } else if (taskToMove && taskToMove.quadrant === targetQuadrant) {
+                   console.log(`Drag ended in the same quadrant (${targetQuadrant}). No update needed.`);
+               } else {
+                   console.log("Drag end condition not met for update:", { taskId, targetId: over.id, taskQuadrant: taskToMove?.quadrant });
+               }
           }
+      } else {
+           console.log("Drag ended without moving or active/over missing:", { activeId: active?.id, overId: over?.id });
       }
   };
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={closestCenter} // Use closestCenter strategy
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
