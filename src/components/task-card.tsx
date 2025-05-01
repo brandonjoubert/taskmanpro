@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { frequencyConfig, CURRENCY_SYMBOL } from '@/lib/constants';
 import { formatDistanceToNow, format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { CheckSquare, Square, Edit, Trash2, Repeat, AlertTriangle, Info, GripVertical } from 'lucide-react'; // Added GripVertical
+import { CheckSquare, Square, Edit, Trash2, Repeat, AlertTriangle, Info, GripVertical } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { calculateImpactScore } from '@/lib/risk'; // Import function to get impact score details
 
@@ -86,13 +86,13 @@ export function TaskCard({
   };
 
   const recurringInfo = task.recurring && task.frequency
-    ? `Repeats ${frequencyConfig[task.frequency].label.toLowerCase()}${task.recurringUntil ? ` until ${format(task.recurringUntil, 'PPP')}` : ''}`
+    ? `Repeats ${frequencyConfig[task.frequency].label.toLowerCase()}${task.recurringUntil ? ` until ${format(task.recurringUntil, 'PP')}` : ''}` // Shortened date format
     : '';
 
   const displayDueDate = task.dueDate && currentTime ? formatDistanceToNow(task.dueDate, { addSuffix: true, now: currentTime }) : 'No due date';
-  const fullDueDate = task.dueDate ? format(task.dueDate, 'PPP p') : '';
+  const fullDueDate = task.dueDate ? format(task.dueDate, 'PPp') : ''; // Shortened date format with time
   const completedDate = task.completedAt && currentTime ? `Completed: ${formatDistanceToNow(task.completedAt, { addSuffix: true, now: currentTime })}` : '';
-  const fullCompletedDate = task.completedAt ? format(task.completedAt, 'PPP p') : '';
+  const fullCompletedDate = task.completedAt ? format(task.completedAt, 'PPp') : ''; // Shortened date format with time
 
   const overdueClass = 'bg-red-200 text-red-900 dark:bg-red-900/40 dark:text-red-100 border-red-300 dark:border-red-800/60';
   const riskValueColorClass = getRiskValueColorClass(task.riskValue); // Get color based on risk value
@@ -103,10 +103,10 @@ export function TaskCard({
             ref={setNodeRef} // Assign ref for dnd-kit
             style={style} // Apply dragging styles
             className={cn(
-                "mb-2 transition-shadow hover:shadow-lg", // Enhanced hover shadow
+                "mb-1.5 transition-shadow hover:shadow-lg", // Reduced bottom margin
                 task.isComplete ? 'opacity-60' : '',
                 isOverdue ? 'border-destructive/50 dark:border-destructive/70' : '',
-                dndIsDragging || isDragging ? 'shadow-2xl ring-2 ring-primary' : '', // Style when actively dragging
+                dndIsDragging || isDragging ? 'shadow-xl ring-2 ring-primary' : '', // Adjusted shadow
                 "relative" // Needed for absolute positioning of drag handle
             )}
             // Do not spread attributes and listeners directly on Card if it interferes with existing events
@@ -116,32 +116,32 @@ export function TaskCard({
              <div
                {...attributes}
                {...listeners}
-               className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 p-1 cursor-grab opacity-50 hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-ring rounded"
+               className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 p-0.5 cursor-grab opacity-30 hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-ring rounded" // Smaller padding
                aria-label="Drag task"
              >
-               <GripVertical className="h-4 w-4 text-muted-foreground" />
+               <GripVertical className="h-3.5 w-3.5 text-muted-foreground" /> {/* Smaller icon */}
              </div>
 
           {/* Card content needs padding adjustment due to handle */}
-          <div className="pl-6">
-              <CardHeader className="flex flex-row items-start justify-between pb-2 pt-3">
-                <div className="flex items-center space-x-2 flex-grow min-w-0">
+          <div className="pl-5"> {/* Reduced left padding */}
+              <CardHeader className="flex flex-row items-start justify-between pb-1 pt-2"> {/* Reduced padding */}
+                <div className="flex items-center space-x-1.5 flex-grow min-w-0"> {/* Reduced space */}
                  <Button
                     variant="ghost"
                     size="icon"
                     onClick={handleToggleComplete}
-                    className="h-6 w-6 flex-shrink-0"
+                    className="h-5 w-5 flex-shrink-0" // Reduced size
                     aria-label={task.isComplete ? "Mark as incomplete" : "Mark as complete"}
                   >
-                    {task.isComplete ? <CheckSquare className="h-4 w-4 text-green-600 dark:text-green-500" /> : <Square className="h-4 w-4 text-muted-foreground" />}
+                    {task.isComplete ? <CheckSquare className="h-3.5 w-3.5 text-green-600 dark:text-green-500" /> : <Square className="h-3.5 w-3.5 text-muted-foreground" />} {/* Smaller icon */}
                   </Button>
                   <div className="flex-grow min-w-0">
                       <CardTitle className={cn(
-                          "text-lg font-semibold break-words",
+                          "text-base font-semibold break-words", // Reduced font size
                           task.isComplete ? 'line-through text-muted-foreground' : '',
                           isOverdue ? 'text-destructive dark:text-destructive/90' : ''
                         )}>
-                          {isOverdue && <AlertTriangle className="h-4 w-4 mr-1 inline-block text-destructive" aria-label="Overdue" />}
+                          {isOverdue && <AlertTriangle className="h-3.5 w-3.5 mr-1 inline-block text-destructive" aria-label="Overdue" />} {/* Smaller icon */}
                           {task.title}
                       </CardTitle>
                        {task.recurring && (
@@ -171,7 +171,7 @@ export function TaskCard({
                  {/* Display Risk Value in Badge */}
                  <Badge
                    className={cn(
-                     "text-xs font-medium flex-shrink-0 ml-2 border",
+                     "text-[10px] font-medium flex-shrink-0 ml-1.5 border px-1.5 py-0", // Smaller text, padding
                       isOverdue ? overdueClass : riskValueColorClass // Use overdue or risk value color
                    )}
                  >
@@ -179,16 +179,20 @@ export function TaskCard({
                  </Badge>
               </CardHeader>
               {task.description && (
-                <CardContent className="pb-3 pt-0">
-                  <CardDescription className={cn("break-words", task.isComplete ? 'line-through text-muted-foreground' : '')}>{task.description}</CardDescription>
+                <CardContent className="pb-1.5 pt-0"> {/* Reduced padding */}
+                  <CardDescription className={cn(
+                      "text-xs break-words line-clamp-2", // Smaller text, limit lines
+                      task.isComplete ? 'line-through text-muted-foreground' : '')}>
+                      {task.description}
+                  </CardDescription>
                 </CardContent>
               )}
-              <CardFooter className="flex justify-between items-center pt-0 pb-3 text-xs text-muted-foreground">
+              <CardFooter className="flex justify-between items-center pt-0 pb-2 text-xs text-muted-foreground"> {/* Reduced padding */}
                  <div className="min-w-0">
                      {task.isComplete && task.completedAt ? (
                          <Tooltip>
                              <TooltipTrigger asChild>
-                                 <span className="truncate cursor-help text-green-700 dark:text-green-400">
+                                 <span className="truncate cursor-help text-green-700 dark:text-green-400 text-[11px]"> {/* Smaller text */}
                                      {currentTime ? completedDate : 'Calculating...'}
                                  </span>
                              </TooltipTrigger>
@@ -200,7 +204,10 @@ export function TaskCard({
                      ) : task.dueDate ? (
                          <Tooltip>
                              <TooltipTrigger asChild>
-                                 <span className={cn("truncate cursor-help", isOverdue ? 'text-destructive dark:text-destructive/90 font-medium' : '')}>
+                                 <span className={cn(
+                                     "truncate cursor-help text-[11px]", // Smaller text
+                                     isOverdue ? 'text-destructive dark:text-destructive/90 font-medium' : ''
+                                     )}>
                                      Due: {currentTime ? displayDueDate : 'Calculating...'}
                                  </span>
                              </TooltipTrigger>
@@ -210,15 +217,15 @@ export function TaskCard({
                              </TooltipContent>
                          </Tooltip>
                      ) : (
-                        <span>No due date</span>
+                        <span className="text-[11px]">No due date</span> // Smaller text
                      )}
                 </div>
-                 <div className="flex space-x-1 flex-shrink-0">
+                 <div className="flex space-x-0.5 flex-shrink-0"> {/* Reduced space */}
                     {!task.isComplete && onEdit && (
                          <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleEdit} aria-label="Edit task">
-                                    <Edit className="h-3 w-3" />
+                                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={handleEdit} aria-label="Edit task"> {/* Reduced size */}
+                                    <Edit className="h-3 w-3" /> {/* Smaller icon */}
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent><p>Edit Task</p></TooltipContent>
@@ -227,8 +234,8 @@ export function TaskCard({
                     {onDelete && (
                          <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive/90" onClick={handleDelete} aria-label="Delete task">
-                                    <Trash2 className="h-3 w-3" />
+                                <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive hover:text-destructive/90" onClick={handleDelete} aria-label="Delete task"> {/* Reduced size */}
+                                    <Trash2 className="h-3 w-3" /> {/* Smaller icon */}
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent><p>Delete Task</p></TooltipContent>
@@ -236,7 +243,7 @@ export function TaskCard({
                      )}
                  </div>
               </CardFooter>
-           </div> {/* End pl-6 wrapper */}
+           </div> {/* End pl-5 wrapper */}
         </Card>
     </TooltipProvider>
   );

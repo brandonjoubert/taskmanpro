@@ -111,7 +111,7 @@ export function MatrixView({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 h-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-2 h-full"> {/* Reduced gap and padding */}
         {Object.values(Quadrant).map((quadrant) => (
           <QuadrantColumn
             key={quadrant}

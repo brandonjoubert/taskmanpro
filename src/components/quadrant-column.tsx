@@ -47,18 +47,18 @@ export function QuadrantColumn({
             isDraggingOver ? "bg-accent/20 border-accent" : "", // Style when dragging over
         )}
     >
-      <CardHeader className="pb-4">
-        <CardTitle className="text-xl font-bold">{config.title}</CardTitle>
-        <CardDescription className="text-sm text-muted-foreground">{config.description}</CardDescription>
+      <CardHeader className="pb-3 pt-4"> {/* Adjusted padding */}
+        <CardTitle className="text-lg font-bold">{config.title}</CardTitle> {/* Slightly smaller title */}
+        <CardDescription className="text-xs text-muted-foreground">{config.description}</CardDescription> {/* Smaller description */}
       </CardHeader>
-      <CardContent className="flex-grow p-2 pt-0 overflow-hidden">
-        <ScrollArea className="h-full pr-3">
+      <CardContent className="flex-grow p-1 pt-0 overflow-hidden"> {/* Reduced padding */}
+        <ScrollArea className="h-full pr-2"> {/* Reduced right padding */}
           <SortableContext
             items={taskIds} // Provide the IDs of the sortable items (tasks)
             strategy={verticalListSortingStrategy} // Use vertical list sorting strategy
           >
             {incompleteTasksInQuadrant.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
+              <p className="text-xs text-muted-foreground text-center py-3"> {/* Smaller text, adjusted padding */}
                 {isDraggingOver ? "Drop task here" : "No tasks in this quadrant."}
               </p>
             ) : (
