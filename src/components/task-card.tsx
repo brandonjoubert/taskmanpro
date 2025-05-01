@@ -104,9 +104,9 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
             </div>
              {/* Conditionally apply overdue style or risk color */}
              <Badge
-               // Remove variant="outline" - colors are now fully controlled by colorClass
+               // No variant needed, colorClass provides all styles including bg, text, border
                className={cn(
-                 "text-xs font-medium flex-shrink-0 ml-2 border", // Base badge styles
+                 "text-xs font-medium flex-shrink-0 ml-2 border", // Base badge styles (border added here for consistency)
                   isOverdue ? overdueClass : riskConfig.colorClass // Apply specific color classes
                )}
              >
@@ -180,4 +180,3 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
     </TooltipProvider>
   );
 }
-
