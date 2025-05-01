@@ -159,6 +159,7 @@ export default function Home() {
                      onEditTask={handleOpenModal}
                      onDeleteTask={handleDeleteTask}
                      currencySymbol={currencySymbol} // Pass current symbol down
+                     updateTask={updateTask} // Pass updateTask function down
                  />
               ) : (
                  <CompletedTasksView
@@ -182,4 +183,3 @@ export default function Home() {
     </div>
   );
 }
-
