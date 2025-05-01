@@ -10,7 +10,8 @@ import { getRiskDisplayConfig } from '@/lib/risk';
 import { frequencyConfig } from '@/lib/constants';
 import { formatDistanceToNow, format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { CheckSquare, Square, Edit, Trash2, Repeat } from 'lucide-react';
+import { CheckSquare, Square, Edit, Trash2, Repeat, AlertTriangle } from 'lucide-react'; // Added AlertTriangle for overdue
+import { useState, useEffect } from 'react'; // Import useEffect and useState for client-side date check
 
 interface TaskCardProps {
   task: Task;
@@ -21,6 +22,15 @@ interface TaskCardProps {
 
 export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardProps) {
   const riskConfig = getRiskDisplayConfig(task.riskLevel);
+  const [isOverdue, setIsOverdue] = useState(false);
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+
+   // Check for overdue status on the client side after hydration
+   useEffect(() => {
+     setCurrentTime(new Date()); // Set current time on client
+     setIsOverdue(task.dueDate && task.dueDate < new Date() && !task.isComplete);
+   }, [task.dueDate, task.isComplete]); // Re-run if dueDate or completion status changes
+
 
   const handleToggleComplete = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -41,15 +51,20 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
     ? `Repeats ${frequencyConfig[task.frequency].label.toLowerCase()}${task.recurringUntil ? ` until ${format(task.recurringUntil, 'PPP')}` : ''}`
     : '';
 
-  const displayDueDate = task.dueDate ? formatDistanceToNow(task.dueDate, { addSuffix: true }) : 'No due date';
+  // Display relative due date only if currentTime is available (client-side)
+  const displayDueDate = task.dueDate && currentTime ? formatDistanceToNow(task.dueDate, { addSuffix: true, now: currentTime }) : 'No due date';
   const fullDueDate = task.dueDate ? format(task.dueDate, 'PPP p') : '';
-  const completedDate = task.completedAt ? `Completed: ${formatDistanceToNow(task.completedAt, { addSuffix: true })}` : '';
+  // Display relative completed date only if currentTime is available
+  const completedDate = task.completedAt && currentTime ? `Completed: ${formatDistanceToNow(task.completedAt, { addSuffix: true, now: currentTime })}` : '';
   const fullCompletedDate = task.completedAt ? format(task.completedAt, 'PPP p') : '';
+
+  // Define the style for the overdue badge
+  const overdueClass = 'bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-200 border-red-200 dark:border-red-700/50';
 
 
   return (
     <TooltipProvider delayDuration={300}>
-        <Card className={cn("mb-2 transition-shadow hover:shadow-md", task.isComplete ? 'opacity-60' : '')}>
+        <Card className={cn("mb-2 transition-shadow hover:shadow-md", task.isComplete ? 'opacity-60' : '', isOverdue ? 'border-red-500/50' : '')}>
           <CardHeader className="flex flex-row items-start justify-between pb-2">
             <div className="flex items-center space-x-2 flex-grow min-w-0">
              <Button
@@ -62,30 +77,37 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
                 {task.isComplete ? <CheckSquare className="h-4 w-4 text-green-600" /> : <Square className="h-4 w-4" />}
               </Button>
               <div className="flex-grow min-w-0">
-                  <CardTitle className={cn("text-lg font-semibold break-words", task.isComplete ? 'line-through' : '')}>
+                  <CardTitle className={cn(
+                      "text-lg font-semibold break-words",
+                      task.isComplete ? 'line-through' : '',
+                      isOverdue ? 'text-red-700 dark:text-red-400' : ''
+                    )}>
+                      {isOverdue && <AlertTriangle className="h-4 w-4 mr-1 inline-block text-red-500" aria-label="Overdue" />}
                       {task.title}
                   </CardTitle>
-                   {task.recurring && !task.isComplete && ( // Show recurrence only if not complete? Or always? Show always for now.
+                   {task.recurring && ( // Always show recurrence icon if recurring
                        <Tooltip>
                            <TooltipTrigger asChild>
                                <Repeat className="h-3 w-3 ml-1 inline-block text-muted-foreground cursor-help" />
                            </TooltipTrigger>
                            <TooltipContent>
-                               <p>{recurringInfo}</p>
+                               <p>{recurringInfo || 'Recurring task'}</p>
                            </TooltipContent>
                        </Tooltip>
                     )}
               </div>
             </div>
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-xs font-medium flex-shrink-0 ml-2 border",
-                riskConfig.colorClass
-              )}
-            >
-              {riskConfig.label} ({riskConfig.quantity})
-            </Badge>
+             {/* Conditionally apply overdue style */}
+             <Badge
+               variant="outline"
+               className={cn(
+                 "text-xs font-medium flex-shrink-0 ml-2 border",
+                  isOverdue ? overdueClass : riskConfig.colorClass // Apply overdue class if overdue
+               )}
+             >
+                {/* Show 'OVERDUE' label or risk label */}
+                {isOverdue ? 'OVERDUE' : riskConfig.label} ({riskConfig.quantity})
+             </Badge>
           </CardHeader>
           {task.description && (
             <CardContent className="pb-3 pt-0">
@@ -97,21 +119,22 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
                  {task.isComplete && task.completedAt ? (
                      <Tooltip>
                          <TooltipTrigger asChild>
+                             {/* Show loading indicator until client time is ready */}
                              <span className="truncate cursor-help text-green-700 dark:text-green-400">
-                                 {completedDate}
+                                 {currentTime ? completedDate : 'Calculating...'}
                              </span>
                          </TooltipTrigger>
                          <TooltipContent>
                              <p>{fullCompletedDate}</p>
-                             {/* Optionally show original due date if needed */}
                              {task.dueDate && <p className="mt-1 text-xs">Originally due: {fullDueDate}</p>}
                          </TooltipContent>
                      </Tooltip>
                  ) : task.dueDate ? (
                      <Tooltip>
                          <TooltipTrigger asChild>
-                             <span className="truncate cursor-help">
-                                 Due: {displayDueDate}
+                             {/* Show loading indicator until client time is ready */}
+                             <span className={cn("truncate cursor-help", isOverdue ? 'text-red-600 dark:text-red-400 font-medium' : '')}>
+                                 Due: {currentTime ? displayDueDate : 'Calculating...'}
                              </span>
                          </TooltipTrigger>
                          <TooltipContent>
