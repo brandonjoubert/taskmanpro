@@ -74,6 +74,19 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
           frequency: initialData.frequency || null,
           recurringUntil: initialData.recurringUntil || null,
         });
+      } else {
+          // Ensure defaults are applied correctly for new tasks on client
+          form.reset({
+              title: '',
+              description: '',
+              dueDate: null,
+              quadrant: Quadrant.Decide,
+              likelihood: Likelihood.Low,
+              impact: Impact.Low,
+              recurring: false,
+              frequency: null,
+              recurringUntil: null,
+            });
       }
    }, [initialData, form]);
 
@@ -151,8 +164,8 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={field.value || undefined}
-                          onSelect={field.onChange}
+                          selected={field.value || undefined} // Handle null
+                          onSelect={(date) => field.onChange(date ?? null)} // Ensure null is passed if cleared
                           // Allow past dates if editing a recurring task? Maybe not needed.
                           // disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                           initialFocus
@@ -268,11 +281,12 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
               <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
                 <FormControl>
                   <Checkbox
-                    checked={field.value}
+                    checked={field.value ?? false} // Ensure boolean
                     onCheckedChange={(checked) => {
-                        field.onChange(checked);
+                        const isChecked = Boolean(checked); // Ensure boolean value
+                        field.onChange(isChecked);
                         // Optionally reset frequency and recurringUntil when unchecked
-                        if (!checked) {
+                        if (!isChecked) {
                             form.setValue('frequency', null);
                             form.setValue('recurringUntil', null);
                         } else if (!form.getValues('dueDate')) {
@@ -304,8 +318,9 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
                         <FormItem>
                             <FormLabel>Frequency *</FormLabel>
                             <Select
-                                onValueChange={(value) => field.onChange(value as Frequency)} // Ensure correct type
-                                defaultValue={field.value ?? undefined} // Handle null default
+                                onValueChange={(value) => field.onChange(value as Frequency ?? null)} // Ensure correct type or null
+                                value={field.value ?? ""} // Handle null value for Select
+                                // defaultValue={field.value ?? undefined} // Handle null default
                             >
                                 <FormControl>
                                     <SelectTrigger>
@@ -355,12 +370,13 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
                           <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                               mode="single"
-                              selected={field.value || undefined}
-                              onSelect={field.onChange}
-                              disabled={(date) =>
-                                // Disable dates before or on the due date
-                                date <= (form.getValues('dueDate') ?? new Date(0))
-                              }
+                              selected={field.value || undefined} // Handle null
+                              onSelect={(date) => field.onChange(date ?? null)} // Ensure null is passed if cleared
+                              disabled={(date) => {
+                                const dueDate = form.getValues('dueDate');
+                                // Disable dates on or before the due date if due date exists
+                                return dueDate ? date <= dueDate : false;
+                              }}
                               initialFocus
                             />
                           </PopoverContent>

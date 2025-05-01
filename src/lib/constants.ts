@@ -31,9 +31,7 @@ export enum Frequency {
   Monthly = 'Monthly',
   BiMonthly = 'BiMonthly', // Every 2 months
   Annually = 'Annually',
-  BiAnnually = 'BiAnnually', // Every 2 years (or twice a year? Clarify - assuming every 2 years)
-                             // Let's assume BiAnnually means every 2 years for now.
-                             // If it means twice a year (every 6 months), adjust logic.
+  BiAnnually = 'BiAnnually', // Every 2 years
 }
 
 

@@ -62,7 +62,7 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
                    {task.recurring && (
                        <Tooltip>
                            <TooltipTrigger asChild>
-                               <Repeat className="h-3 w-3 ml-1 inline-block text-muted-foreground" />
+                               <Repeat className="h-3 w-3 ml-1 inline-block text-muted-foreground cursor-help" />
                            </TooltipTrigger>
                            <TooltipContent>
                                <p>{recurringInfo}</p>
@@ -88,13 +88,13 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
                 {task.dueDate ? (
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <span className="truncate"> {/* Truncate if too long */}
+                            <span className="truncate cursor-help"> {/* Truncate if too long */}
                                 Due: {formatDistanceToNow(task.dueDate, { addSuffix: true })}
                             </span>
                         </TooltipTrigger>
                         <TooltipContent>
                             <p>{format(task.dueDate, 'PPP p')}</p> {/* Show full date/time on hover */}
-                            {recurringInfo && <p>{recurringInfo}</p>}
+                            {recurringInfo && <p className="mt-1 text-xs">{recurringInfo}</p>}
                         </TooltipContent>
                     </Tooltip>
                 ) : (

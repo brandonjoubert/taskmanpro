@@ -38,6 +38,7 @@ export function useTasks() {
           recurringUntil: task.recurringUntil ? new Date(task.recurringUntil) : null, // Parse recurringUntil
           // Ensure frequency is valid or null
           frequency: Object.values(Frequency).includes(task.frequency) ? task.frequency : null,
+          recurring: !!task.recurring, // Ensure boolean
         }));
         setTasks(parsedTasks);
       } else {
@@ -77,7 +78,7 @@ export function useTasks() {
       frequency: formData.recurring ? formData.frequency : null, // Null if not recurring
       recurringUntil: formData.recurring ? formData.recurringUntil : null, // Null if not recurring
     };
-    setTasks((prevTasks) => [newTask, ...prevTasks].sort((a, b) => (a.dueDate?.getTime() ?? Infinity) - (b.dueDate?.getTime() ?? Infinity))); // Sort by due date
+    setTasks((prevTasks) => [...prevTasks, newTask].sort((a, b) => (a.dueDate?.getTime() ?? Infinity) - (b.dueDate?.getTime() ?? Infinity))); // Add and sort
      // Optional: Add notification here
      // TODO: Implement logic to generate future instances if it's a recurring task
   }, []);
@@ -118,23 +119,21 @@ export function useTasks() {
             if (task.id === id) {
                 const updatedTask = { ...task, isComplete: !task.isComplete };
 
-                // If completing a recurring task, generate the next instance
-                // if (!updatedTask.isComplete && task.recurring && task.frequency && task.dueDate) {
+                // Placeholder for future recurring logic
+                // if (updatedTask.isComplete && task.recurring && task.frequency && task.dueDate) {
                 //     // TODO: Implement generateNextTaskInstance logic here
-                //     // const nextInstance = generateNextTaskInstance(updatedTask);
-                //     // if (nextInstance) {
-                //     //     // This is complex: need to decide whether to add a new task
-                //     //     // or update the existing one's due date.
-                //     //     // For simplicity, maybe just update the due date for now?
-                //     //     // Or maybe recurring tasks don't get "completed" in the traditional sense?
-                //     //     // Revisit this logic.
+                //     // This is where you'd calculate the next due date based on frequency
+                //     // and potentially create a new task instance or update this one.
+                //     // Check against recurringUntil date.
                 // }
 
                  return updatedTask;
             }
             return task;
         });
-        return newTasks.sort((a, b) => (a.dueDate?.getTime() ?? Infinity) - (b.dueDate?.getTime() ?? Infinity)); // Re-sort
+        // Re-sort after completion toggle to potentially move completed tasks down visually if desired
+        // Or keep the due date sort. For now, keep due date sort.
+        return newTasks.sort((a, b) => (a.dueDate?.getTime() ?? Infinity) - (b.dueDate?.getTime() ?? Infinity));
     });
      // TODO: Refine the logic for completing recurring tasks.
      // For now, it just marks the current instance complete.
