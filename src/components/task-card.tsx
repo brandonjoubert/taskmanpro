@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { Task } from '@/interfaces/task';
@@ -58,8 +59,8 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
   const completedDate = task.completedAt && currentTime ? `Completed: ${formatDistanceToNow(task.completedAt, { addSuffix: true, now: currentTime })}` : '';
   const fullCompletedDate = task.completedAt ? format(task.completedAt, 'PPP p') : '';
 
-  // Define the style for the overdue badge
-  const overdueClass = 'bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-200 border-red-200 dark:border-red-700/50';
+  // Define the style for the overdue badge - Use darker reds
+  const overdueClass = 'bg-red-200 text-red-900 dark:bg-red-900/40 dark:text-red-100 border-red-300 dark:border-red-800/60';
 
 
   return (
@@ -174,3 +175,4 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
     </TooltipProvider>
   );
 }
+
