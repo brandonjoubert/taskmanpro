@@ -29,7 +29,8 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
    // Check for overdue status on the client side after hydration
    useEffect(() => {
      setCurrentTime(new Date()); // Set current time on client
-     setIsOverdue(task.dueDate && task.dueDate < new Date() && !task.isComplete);
+     // Check if task has a due date, it's in the past, and the task is not complete
+     setIsOverdue(!!task.dueDate && task.dueDate < new Date() && !task.isComplete);
    }, [task.dueDate, task.isComplete]); // Re-run if dueDate or completion status changes
 
 
@@ -65,7 +66,8 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
 
   return (
     <TooltipProvider delayDuration={300}>
-        <Card className={cn("mb-2 transition-shadow hover:shadow-md", task.isComplete ? 'opacity-60' : '', isOverdue ? 'border-red-500/50' : '')}>
+        {/* Apply red border if overdue */}
+        <Card className={cn("mb-2 transition-shadow hover:shadow-md", task.isComplete ? 'opacity-60' : '', isOverdue ? 'border-destructive/50 dark:border-destructive/70' : '')}>
           <CardHeader className="flex flex-row items-start justify-between pb-2">
             <div className="flex items-center space-x-2 flex-grow min-w-0">
              <Button
@@ -75,15 +77,17 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
                 className="h-6 w-6 flex-shrink-0"
                 aria-label={task.isComplete ? "Mark as incomplete" : "Mark as complete"}
               >
-                {task.isComplete ? <CheckSquare className="h-4 w-4 text-green-600" /> : <Square className="h-4 w-4" />}
+                {task.isComplete ? <CheckSquare className="h-4 w-4 text-green-600 dark:text-green-500" /> : <Square className="h-4 w-4 text-muted-foreground" />}
               </Button>
               <div className="flex-grow min-w-0">
+                  {/* Apply red text color if overdue */}
                   <CardTitle className={cn(
                       "text-lg font-semibold break-words",
-                      task.isComplete ? 'line-through' : '',
-                      isOverdue ? 'text-red-700 dark:text-red-400' : ''
+                      task.isComplete ? 'line-through text-muted-foreground' : '',
+                      isOverdue ? 'text-destructive dark:text-destructive/90' : ''
                     )}>
-                      {isOverdue && <AlertTriangle className="h-4 w-4 mr-1 inline-block text-red-500" aria-label="Overdue" />}
+                      {/* Show overdue icon if applicable */}
+                      {isOverdue && <AlertTriangle className="h-4 w-4 mr-1 inline-block text-destructive" aria-label="Overdue" />}
                       {task.title}
                   </CardTitle>
                    {task.recurring && ( // Always show recurrence icon if recurring
@@ -98,11 +102,11 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
                     )}
               </div>
             </div>
-             {/* Conditionally apply overdue style */}
+             {/* Conditionally apply overdue style or risk color */}
              <Badge
-               variant="outline" // Keep variant="outline" for base styling, colors override
+               // Remove variant="outline" - colors are now fully controlled by colorClass
                className={cn(
-                 "text-xs font-medium flex-shrink-0 ml-2 border", // Ensure border class is present
+                 "text-xs font-medium flex-shrink-0 ml-2 border", // Base badge styles
                   isOverdue ? overdueClass : riskConfig.colorClass // Apply specific color classes
                )}
              >
@@ -112,7 +116,7 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
           </CardHeader>
           {task.description && (
             <CardContent className="pb-3 pt-0">
-              <CardDescription className={cn("break-words", task.isComplete ? 'line-through' : '')}>{task.description}</CardDescription>
+              <CardDescription className={cn("break-words", task.isComplete ? 'line-through text-muted-foreground' : '')}>{task.description}</CardDescription>
             </CardContent>
           )}
           <CardFooter className="flex justify-between items-center pt-0 pb-3 text-xs text-muted-foreground">
@@ -134,7 +138,8 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
                      <Tooltip>
                          <TooltipTrigger asChild>
                              {/* Show loading indicator until client time is ready */}
-                             <span className={cn("truncate cursor-help", isOverdue ? 'text-red-600 dark:text-red-400 font-medium' : '')}>
+                             {/* Apply red text color if overdue */}
+                             <span className={cn("truncate cursor-help", isOverdue ? 'text-destructive dark:text-destructive/90 font-medium' : '')}>
                                  Due: {currentTime ? displayDueDate : 'Calculating...'}
                              </span>
                          </TooltipTrigger>
