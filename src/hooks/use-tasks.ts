@@ -4,20 +4,36 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Task } from '@/interfaces/task';
 import type { TaskFormData } from '@/components/task-form-schema';
-import { calculateRiskLevel } from '@/lib/risk';
-import { Quadrant, Impact, RiskLevel, Frequency } from '@/lib/constants'; // Removed Likelihood
+import { calculateRiskValue, calculateImpactScore } from '@/lib/risk';
+import { Quadrant, Frequency, impactScoreConfig, quadrantConfig } from '@/lib/constants';
 
-// Helper to generate unique IDs (replace with a more robust solution like uuid if needed)
+// Helper to generate unique IDs
 const generateId = () => `task_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-// Initial dummy data for demonstration - including recurring example
-const initialTasks: Task[] = [
-  { id: generateId(), title: 'Review Q3 budget', description: 'Final check before submission', dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), quadrant: Quadrant.Do, impact: Impact.High, riskLevel: RiskLevel.Critical, isComplete: false, createdAt: new Date(), completedAt: null, recurring: false }, // Likelihood removed
-  { id: generateId(), title: 'Plan team offsite', description: 'Location, activities, budget', dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), quadrant: Quadrant.Decide, impact: Impact.Medium, riskLevel: RiskLevel.High, isComplete: false, createdAt: new Date(), completedAt: null, recurring: false }, // Likelihood removed
-  { id: generateId(), title: 'Submit weekly report', description: 'Sales data and team updates', dueDate: new Date(new Date().setHours(17,0,0,0)), quadrant: Quadrant.Delegate, impact: Impact.Medium, riskLevel: RiskLevel.Medium, isComplete: false, createdAt: new Date(), completedAt: null, recurring: true, frequency: Frequency.Weekly, recurringUntil: null }, // Recurring task example, Likelihood removed
-  { id: generateId(), title: 'Clean up old project files', description: 'Low priority', dueDate: null, quadrant: Quadrant.Delete, impact: Impact.Low, riskLevel: RiskLevel.Low, isComplete: false, createdAt: new Date(), completedAt: null, recurring: false }, // Likelihood removed
-  { id: generateId(), title: 'Urgent client call', description: 'Address critical issue', dueDate: new Date(Date.now() + 4 * 60 * 60 * 1000), quadrant: Quadrant.Do, impact: Impact.Medium, riskLevel: RiskLevel.High, isComplete: false, createdAt: new Date(), completedAt: null, recurring: false }, // Likelihood removed
-];
+// Function to generate initial tasks with new structure
+const generateInitialTasks = (): Task[] => {
+    const tasksRaw = [
+      { title: 'Review Q3 budget', description: 'Final check before submission', dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), quadrant: Quadrant.Do, monetaryImpact: 15000, recurring: false },
+      { title: 'Plan team offsite', description: 'Location, activities, budget', dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), quadrant: Quadrant.Decide, monetaryImpact: 3000, recurring: false },
+      { title: 'Submit weekly report', description: 'Sales data and team updates', dueDate: new Date(new Date().setHours(17,0,0,0)), quadrant: Quadrant.Delegate, monetaryImpact: 500, recurring: true, frequency: Frequency.Weekly, recurringUntil: null },
+      { title: 'Clean up old project files', description: 'Low priority', dueDate: null, quadrant: Quadrant.Delete, monetaryImpact: 50, recurring: false },
+      { title: 'Urgent client call', description: 'Address critical issue', dueDate: new Date(Date.now() + 4 * 60 * 60 * 1000), quadrant: Quadrant.Do, monetaryImpact: 8000, recurring: false },
+      { title: 'Research new CRM tool', description: 'Explore options for sales team', dueDate: null, quadrant: Quadrant.Decide, monetaryImpact: 25000, recurring: false },
+      { title: 'Order office snacks', description: 'Refill kitchen supplies', dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), quadrant: Quadrant.Delegate, monetaryImpact: 80, recurring: false },
+    ];
+
+    return tasksRaw.map(taskData => ({
+        id: generateId(),
+        ...taskData,
+        riskValue: calculateRiskValue(taskData.monetaryImpact, taskData.quadrant),
+        isComplete: false,
+        createdAt: new Date(),
+        completedAt: null,
+        frequency: taskData.frequency || null,
+        recurringUntil: taskData.recurringUntil || null,
+    }));
+}
+
 
 // Key for local storage
 const LOCAL_STORAGE_KEY = 'riskQuadrantTasks';
@@ -25,44 +41,43 @@ const TASK_RETENTION_DAYS = 30; // Keep completed tasks for 30 days
 
 export function useTasks() {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // State for initial loading
+  const [isLoading, setIsLoading] = useState(true);
 
-   // Load tasks from local storage on initial mount (client-side only)
+   // Load tasks from local storage on initial mount
   useEffect(() => {
-    setIsLoading(true); // Start loading
+    setIsLoading(true);
+    let loadedTasks: Task[] = [];
     try {
       const storedTasks = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (storedTasks) {
-        const parsedTasks = JSON.parse(storedTasks).map((task: any) => ({
+        loadedTasks = JSON.parse(storedTasks).map((task: any) => ({
           ...task,
-          // Ensure dates are Date objects
           dueDate: task.dueDate ? new Date(task.dueDate) : null,
           createdAt: new Date(task.createdAt),
-          completedAt: task.completedAt ? new Date(task.completedAt) : null, // Parse completedAt
+          completedAt: task.completedAt ? new Date(task.completedAt) : null,
           recurringUntil: task.recurringUntil ? new Date(task.recurringUntil) : null,
-          frequency: Object.values(Frequency).includes(task.frequency) ? task.frequency : null,
+          // Validate enums and types
+          quadrant: Object.values(Quadrant).includes(task.quadrant) ? task.quadrant : Quadrant.Delete,
+          monetaryImpact: typeof task.monetaryImpact === 'number' && isFinite(task.monetaryImpact) && task.monetaryImpact >= 0 ? task.monetaryImpact : 0,
+          riskValue: typeof task.riskValue === 'number' && isFinite(task.riskValue) ? task.riskValue : calculateRiskValue(task.monetaryImpact ?? 0, task.quadrant ?? Quadrant.Delete), // Recalculate if invalid
+          isComplete: !!task.isComplete,
           recurring: !!task.recurring,
-          isComplete: !!task.isComplete, // Ensure boolean
-          // Ensure impact is valid enum value
-          impact: Object.values(Impact).includes(task.impact) ? task.impact : Impact.Low, // Add default
-          riskLevel: Object.values(RiskLevel).includes(task.riskLevel) ? task.riskLevel : RiskLevel.Low // Add default
+          frequency: Object.values(Frequency).includes(task.frequency) ? task.frequency : null,
         }));
-        setAllTasks(parsedTasks);
       } else {
-         setAllTasks(initialTasks);
+         loadedTasks = generateInitialTasks();
       }
     } catch (error) {
       console.error("Failed to load tasks from local storage:", error);
-       setAllTasks(initialTasks); // Fallback to initial data on error
+       loadedTasks = generateInitialTasks(); // Fallback on error
     } finally {
-        // Defer setting isLoading to false to allow cleanup effect to run
-        // setIsLoading(false); // Moved to cleanup effect
+       setAllTasks(loadedTasks);
+       // Defer setting isLoading to false until after cleanup effect
     }
   }, []);
 
-  // Save tasks to local storage whenever tasks change (client-side only)
+  // Save tasks to local storage whenever tasks change
   useEffect(() => {
-      // Avoid saving during initial load before tasks are set or after cleanup
       if (!isLoading) {
           try {
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(allTasks));
@@ -74,13 +89,12 @@ export function useTasks() {
 
   // Cleanup old completed tasks
    useEffect(() => {
-     if (allTasks.length > 0) { // Only run if tasks have been loaded
+     if (!isLoading && allTasks.length > 0) {
        const retentionDate = new Date();
        retentionDate.setDate(retentionDate.getDate() - TASK_RETENTION_DAYS);
 
        setAllTasks(currentTasks => {
          const filteredTasks = currentTasks.filter(task => {
-           // Keep tasks that are NOT complete OR were completed within the retention period
            return !task.completedAt || task.completedAt > retentionDate;
          });
 
@@ -88,31 +102,30 @@ export function useTasks() {
            console.log(`Removed ${currentTasks.length - filteredTasks.length} old completed tasks.`);
            return filteredTasks;
          }
-         return currentTasks; // No changes
+         return currentTasks;
        });
-        setIsLoading(false); // Mark loading as complete after cleanup
-     } else if (!localStorage.getItem(LOCAL_STORAGE_KEY)) {
-        // Handle case where initialTasks is empty or local storage was empty
-        setIsLoading(false);
      }
-   }, [allTasks.length]); // Rerun if the number of tasks changes significantly (e.g., initial load)
+     // Ensure loading is false after potential cleanup
+     if (!isLoading) setIsLoading(false); // Mark loading complete if not already
+     else if (allTasks.length > 0) setIsLoading(false); // Mark loading complete if tasks loaded and cleanup ran
+
+   }, [isLoading, allTasks.length]); // Depend on isLoading and task count
 
 
   const addTask = useCallback((formData: TaskFormData) => {
     const newTask: Task = {
       ...formData,
       id: generateId(),
-      riskLevel: calculateRiskLevel(formData.impact), // Pass only impact
+      riskValue: calculateRiskValue(formData.monetaryImpact, formData.quadrant), // Calculate risk value
       isComplete: false,
       createdAt: new Date(),
-      completedAt: null, // Ensure completedAt is null for new tasks
+      completedAt: null,
       dueDate: formData.dueDate || null,
       recurring: formData.recurring ?? false,
       frequency: formData.recurring ? formData.frequency : null,
       recurringUntil: formData.recurring ? formData.recurringUntil : null,
     };
-    setAllTasks((prevTasks) => [...prevTasks, newTask]); // No sort needed here, filter logic handles display
-     // TODO: Implement logic to generate future instances if it's a recurring task
+    setAllTasks((prevTasks) => [...prevTasks, newTask]);
   }, []);
 
   const updateTask = useCallback((formData: TaskFormData) => {
@@ -124,24 +137,21 @@ export function useTasks() {
       prevTasks.map((task) =>
         task.id === formData.id
           ? {
-              ...task,
-              ...formData,
-              riskLevel: calculateRiskLevel(formData.impact), // Pass only impact
+              ...task, // Keep existing fields like createdAt, completedAt, isComplete
+              ...formData, // Apply updated form data
+              riskValue: calculateRiskValue(formData.monetaryImpact, formData.quadrant), // Recalculate risk value
               dueDate: formData.dueDate || null,
               recurring: formData.recurring ?? false,
               frequency: formData.recurring ? formData.frequency : null,
               recurringUntil: formData.recurring ? formData.recurringUntil : null,
-              // completedAt and isComplete are handled by toggleTaskComplete
             }
           : task
       )
     );
-     // TODO: Handle updates to recurring tasks
   }, []);
 
   const deleteTask = useCallback((id: string) => {
     setAllTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
-     // TODO: Handle deletion of recurring tasks (delete future instances?)
   }, []);
 
   const toggleTaskComplete = useCallback((id: string) => {
@@ -156,18 +166,11 @@ export function useTasks() {
                     isComplete: isNowComplete,
                     completedAt: completionDate
                 };
-
-                // Placeholder for recurring logic - currently just marks this instance
-                // if (updatedTask.isComplete && task.recurring && task.frequency && task.dueDate) {
-                //    // TODO: Generate next task instance
-                // }
-
-                 return updatedTask;
+                return updatedTask;
             }
             return task;
         });
     });
-     // TODO: Refine the logic for completing recurring tasks.
   }, []);
 
   // Filter tasks into incomplete and completed lists
@@ -177,11 +180,11 @@ export function useTasks() {
 
   const completedTasks = allTasks
     .filter(task => task.isComplete)
-    .sort((a, b) => (b.completedAt?.getTime() ?? 0) - (a.completedAt?.getTime() ?? 0)); // Sort completed by most recent
+    .sort((a, b) => (b.completedAt?.getTime() ?? 0) - (a.completedAt?.getTime() ?? 0));
 
 
   return {
-    tasks: incompleteTasks, // Rename 'tasks' to 'incompleteTasks' for clarity? Keep as 'tasks' for backward compatibility with MatrixView
+    tasks: incompleteTasks,
     completedTasks,
     isLoading,
     addTask,
@@ -190,4 +193,3 @@ export function useTasks() {
     toggleTaskComplete,
   };
 }
-

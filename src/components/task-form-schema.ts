@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Quadrant, Impact, Frequency } from '@/lib/constants'; // Removed Likelihood
+import { Quadrant, Frequency, CURRENCY_SYMBOL } from '@/lib/constants';
 
 export const taskFormSchema = z.object({
   id: z.string().optional(), // Optional for creation, required for update
@@ -7,15 +7,19 @@ export const taskFormSchema = z.object({
   description: z.string().max(500, { message: 'Description must be 500 characters or less.' }).optional(),
   dueDate: z.date().nullable().optional(),
   quadrant: z.nativeEnum(Quadrant, { errorMap: () => ({ message: 'Please select a quadrant.' }) }),
-  // likelihood: z.nativeEnum(Likelihood, { errorMap: () => ({ message: 'Please select likelihood.' }) }), // Removed likelihood
-  impact: z.nativeEnum(Impact, { errorMap: () => ({ message: 'Please select impact.' }) }),
+  monetaryImpact: z.number({
+      required_error: "Monetary impact is required.",
+      invalid_type_error: "Monetary impact must be a number.",
+    })
+    .min(0, { message: `Impact must be zero or positive.` })
+    .finite({ message: "Impact must be a finite number." }),
 
   // Recurrence fields
   recurring: z.boolean().default(false).optional(),
   frequency: z.nativeEnum(Frequency).nullable().optional(),
   recurringUntil: z.date().nullable().optional(),
 
-  // isComplete and riskLevel will be handled separately or derived
+  // isComplete and riskValue will be handled separately or derived
 })
 .superRefine((data, ctx) => {
     // If recurring is true, frequency is required

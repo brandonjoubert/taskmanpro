@@ -1,37 +1,46 @@
-import { Impact, RiskLevel, riskLevelConfig } from './constants'; // Removed Likelihood
+import { Quadrant, impactScoreConfig, quadrantConfig } from './constants';
 import type { Task } from '@/interfaces/task';
 
 /**
- * Calculates the RiskLevel based on Impact.
- * Assumes a simplified model where likelihood is implicitly high or not considered.
- * Customize this logic as needed.
+ * Calculates the Impact Score (1-5) based on the monetary impact value.
+ * Uses the ranges defined in constants.ts.
  */
-export function calculateRiskLevel(impact: Impact): RiskLevel {
-  switch (impact) {
-      case Impact.High:
-          return RiskLevel.Critical; // High impact alone is considered critical
-      case Impact.Medium:
-          return RiskLevel.High; // Medium impact is considered high risk
-      case Impact.Low:
-          return RiskLevel.Medium; // Low impact is considered medium risk
-      default:
-          return RiskLevel.Low; // Fallback, though should not happen with enum
-  }
+export function calculateImpactScore(monetaryImpact: number): number {
+  // Find the first configuration where the monetary impact is less than the upper bound
+  // or where the upper bound is null (infinity).
+  const config = impactScoreConfig.find(
+    (level) => monetaryImpact < (level.upperBound ?? Infinity)
+  );
+
+  // Default to the lowest score if something goes wrong (e.g., negative impact)
+  return config?.score ?? 1;
 }
 
 /**
- * Gets the display configuration (color, icon, label) for a given RiskLevel.
+ * Gets the score associated with a given Quadrant.
  */
-export function getRiskDisplayConfig(riskLevel: RiskLevel) {
-  return riskLevelConfig[riskLevel];
+export function getQuadrantScore(quadrant: Quadrant): number {
+  return quadrantConfig[quadrant].score;
 }
 
 /**
- * Updates the risk level of a task based on its impact.
+ * Calculates the final Risk Value by multiplying Impact Score and Quadrant Score.
  */
-export function updateTaskRiskLevel<T extends Task>(task: T): T {
+export function calculateRiskValue(monetaryImpact: number, quadrant: Quadrant): number {
+  const impactScore = calculateImpactScore(monetaryImpact);
+  const quadrantScore = getQuadrantScore(quadrant);
+  return impactScore * quadrantScore;
+}
+
+
+/**
+ * Updates the risk value of a task based on its monetary impact and quadrant.
+ */
+export function updateTaskRiskValue<T extends Task>(task: T): T {
   return {
     ...task,
-    riskLevel: calculateRiskLevel(task.impact),
+    riskValue: calculateRiskValue(task.monetaryImpact, task.quadrant),
   };
 }
+
+// Removed previous functions related to Likelihood and RiskLevel

@@ -1,28 +1,10 @@
 
+
 export enum Quadrant {
   Do = 'Do', // Urgent & Important
   Decide = 'Decide', // Important & Not Urgent
   Delegate = 'Delegate', // Urgent & Not Important
   Delete = 'Delete', // Not Urgent & Not Important
-}
-
-// export enum Likelihood { // Removed Likelihood
-//   Low = 'Low',
-//   Medium = 'Medium',
-//   High = 'High',
-// }
-
-export enum Impact {
-  Low = 'Low',
-  Medium = 'Medium',
-  High = 'High',
-}
-
-export enum RiskLevel {
-  Low = 'Low',
-  Medium = 'Medium',
-  High = 'High',
-  Critical = 'Critical',
 }
 
 // Enum for recurrence frequency
@@ -36,24 +18,27 @@ export enum Frequency {
 }
 
 
-// Define display properties (e.g., colors, icons) for each level/quadrant
-// Tailwind classes are used for colors to respect the theme
+// --- Configuration ---
 
-export const quadrantConfig: Record<Quadrant, { title: string; description: string }> = {
-  [Quadrant.Do]: { title: 'Do', description: 'Urgent & Important' },
-  [Quadrant.Decide]: { title: 'Decide', description: 'Important, Not Urgent' },
-  [Quadrant.Delegate]: { title: 'Delegate', description: 'Urgent, Not Important' },
-  [Quadrant.Delete]: { title: 'Delete', description: 'Not Urgent, Not Important' },
+export const CURRENCY_SYMBOL = '$'; // Default currency symbol
+
+// Define display properties for quadrants
+export const quadrantConfig: Record<Quadrant, { title: string; description: string; score: number }> = {
+  [Quadrant.Do]: { title: 'Do', description: 'Urgent & Important', score: 4 },
+  [Quadrant.Decide]: { title: 'Decide', description: 'Important, Not Urgent', score: 3 },
+  [Quadrant.Delegate]: { title: 'Delegate', description: 'Urgent, Not Important', score: 2 },
+  [Quadrant.Delete]: { title: 'Delete', description: 'Not Urgent, Not Important', score: 1 },
 };
 
-// Updated riskLevelConfig with contrasting text/background and borders for better visibility
-// Low = Yellow, Medium/High = Orange, Critical = Green
-export const riskLevelConfig: Record<RiskLevel, { label: string; quantity: number; colorClass: string; icon?: React.ComponentType<{ className?: string }> }> = {
-  [RiskLevel.Low]: { label: 'Low Risk', quantity: 1, colorClass: 'bg-yellow-200 text-yellow-900 dark:bg-yellow-900/40 dark:text-yellow-100 border-yellow-300 dark:border-yellow-800/60' }, // Yellow - Corresponds to Low Impact now
-  [RiskLevel.Medium]: { label: 'Medium Risk', quantity: 2, colorClass: 'bg-orange-200 text-orange-900 dark:bg-orange-900/40 dark:text-orange-100 border-orange-300 dark:border-orange-800/60' }, // Orange - Corresponds to Low Impact now
-  [RiskLevel.High]: { label: 'High Risk', quantity: 3, colorClass: 'bg-orange-200 text-orange-900 dark:bg-orange-900/40 dark:text-orange-100 border-orange-300 dark:border-orange-800/60' }, // Orange - Corresponds to Medium Impact now
-  [RiskLevel.Critical]: { label: 'Critical Risk', quantity: 4, colorClass: 'bg-green-200 text-green-900 dark:bg-green-900/40 dark:text-green-100 border-green-300 dark:border-green-800/60' }, // Green - Corresponds to High Impact now
-};
+// Define monetary impact levels and their scores
+// The upper bound is exclusive (e.g., 0-100 means >= 0 AND < 100)
+export const impactScoreConfig: Array<{ upperBound: number | null; score: number; label: string }> = [
+    { upperBound: 100, score: 1, label: `Very Low (< ${CURRENCY_SYMBOL}100)` },    // Score 1 for impact < 100
+    { upperBound: 1000, score: 2, label: `Low (${CURRENCY_SYMBOL}100 - ${CURRENCY_SYMBOL}999)` },   // Score 2 for impact 100 - 999
+    { upperBound: 5000, score: 3, label: `Medium (${CURRENCY_SYMBOL}1k - ${CURRENCY_SYMBOL}5k)` },  // Score 3 for impact 1000 - 4999
+    { upperBound: 20000, score: 4, label: `High (${CURRENCY_SYMBOL}5k - ${CURRENCY_SYMBOL}20k)` },  // Score 4 for impact 5000 - 19999
+    { upperBound: null, score: 5, label: `Critical (>= ${CURRENCY_SYMBOL}20k)` }, // Score 5 for impact >= 20000 (null upperBound means infinity)
+].sort((a, b) => a.score - b.score); // Ensure sorted by score for easy lookup
 
 
 // Display names for Frequency enum
@@ -66,3 +51,5 @@ export const frequencyConfig: Record<Frequency, { label: string }> = {
     [Frequency.BiAnnually]: { label: 'Every 2 Years' },
 };
 
+
+// Removed RiskLevel enum and riskLevelConfig

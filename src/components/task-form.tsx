@@ -20,13 +20,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox'; // Import Checkbox
-import { Label } from '@/components/ui/label'; // Import Label for Checkbox
+// Removed RadioGroup imports as they are no longer needed for impact
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { Quadrant, Impact, Frequency, quadrantConfig, frequencyConfig } from '@/lib/constants'; // Import Frequency and config, removed Likelihood
+import { Quadrant, Frequency, quadrantConfig, frequencyConfig, CURRENCY_SYMBOL } from '@/lib/constants';
 import type { Task } from '@/interfaces/task';
 
 interface TaskFormProps {
@@ -43,23 +43,22 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
       title: initialData?.title || '',
       description: initialData?.description || '',
       dueDate: initialData?.dueDate || null,
-      quadrant: initialData?.quadrant || Quadrant.Decide, // Sensible default
-      // likelihood: initialData?.likelihood || Likelihood.Low, // Removed likelihood
-      impact: initialData?.impact || Impact.Low,
+      quadrant: initialData?.quadrant || Quadrant.Decide,
+      monetaryImpact: initialData?.monetaryImpact ?? 0, // Default to 0 or initial value
       recurring: initialData?.recurring || false,
       frequency: initialData?.frequency || null,
       recurringUntil: initialData?.recurringUntil || null,
     },
   });
 
-  // Watch the 'recurring' field to conditionally show/hide frequency and recurringUntil fields
+  // Watch the 'recurring' field
   const isRecurring = useWatch({
       control: form.control,
       name: 'recurring',
       defaultValue: initialData?.recurring || false
   });
 
-   // Handle hydration mismatch for defaultValues potentially differing server/client
+   // Handle hydration mismatch
    useEffect(() => {
       if (initialData) {
         form.reset({
@@ -68,21 +67,18 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
           description: initialData.description || '',
           dueDate: initialData.dueDate || null,
           quadrant: initialData.quadrant,
-          // likelihood: initialData.likelihood, // Removed likelihood
-          impact: initialData.impact,
+          monetaryImpact: initialData.monetaryImpact,
           recurring: initialData.recurring,
           frequency: initialData.frequency || null,
           recurringUntil: initialData.recurringUntil || null,
         });
       } else {
-          // Ensure defaults are applied correctly for new tasks on client
           form.reset({
               title: '',
               description: '',
               dueDate: null,
               quadrant: Quadrant.Decide,
-              // likelihood: Likelihood.Low, // Removed likelihood
-              impact: Impact.Low,
+              monetaryImpact: 0,
               recurring: false,
               frequency: null,
               recurringUntil: null,
@@ -94,8 +90,7 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
   const handleFormSubmit = (data: TaskFormData) => {
       const submitData: TaskFormData = {
           ...data,
-          id: initialData?.id, // Include ID if editing
-          // Ensure frequency and recurringUntil are null if not recurring
+          id: initialData?.id,
           frequency: data.recurring ? data.frequency : null,
           recurringUntil: data.recurring ? data.recurringUntil : null,
       };
@@ -140,7 +135,7 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
               name="dueDate"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Due Date {isRecurring ? '*' : ''}</FormLabel> {/* Add asterisk if recurring */}
+                  <FormLabel>Due Date {isRecurring ? '*' : ''}</FormLabel>
                    <div className="flex items-center gap-2">
                     <Popover>
                       <PopoverTrigger asChild>
@@ -164,10 +159,8 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
-                          selected={field.value || undefined} // Handle null
-                          onSelect={(date) => field.onChange(date ?? null)} // Ensure null is passed if cleared
-                          // Allow past dates if editing a recurring task? Maybe not needed.
-                          // disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                          selected={field.value || undefined}
+                          onSelect={(date) => field.onChange(date ?? null)}
                           initialFocus
                         />
                       </PopoverContent>
@@ -216,30 +209,37 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
             />
         </div>
 
-        {/* --- Risk Assessment Fields --- */}
-         {/* Removed Likelihood section */}
+        {/* --- Monetary Impact Field --- */}
          <FormField
             control={form.control}
-            name="impact"
+            name="monetaryImpact"
             render={({ field }) => (
-              <FormItem className="space-y-3">
-                <FormLabel>Impact (if not done/fails) *</FormLabel>
+              <FormItem>
+                <FormLabel>Monetary Impact ({CURRENCY_SYMBOL}) *</FormLabel>
                 <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    className="flex flex-wrap gap-x-4 gap-y-2" // Use flex-wrap
-                  >
-                     {Object.values(Impact).map((level) => (
-                       <FormItem key={level} className="flex items-center space-x-2 space-y-0">
-                           <FormControl>
-                             <RadioGroupItem value={level} id={`impact-${level}`} />
-                           </FormControl>
-                           <Label htmlFor={`impact-${level}`} className="font-normal">{level}</Label>
-                       </FormItem>
-                    ))}
-                  </RadioGroup>
+                   <div className="relative">
+                      <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
+                          {CURRENCY_SYMBOL}
+                      </span>
+                      <Input
+                        type="number"
+                        placeholder="e.g., 1500"
+                        step="any" // Allow decimals if needed, or set to "1" for whole numbers
+                        min="0"
+                        className="pl-7" // Add padding for the currency symbol
+                        {...field}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            // Parse as float, allow empty string to clear, otherwise ensure it's a number
+                            field.onChange(value === '' ? null : parseFloat(value));
+                         }}
+                        value={field.value ?? ''} // Ensure value is controlled, handle null/undefined
+                      />
+                  </div>
                 </FormControl>
+                <FormDescription>
+                  Estimate the financial impact if this task is not done or fails.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -254,17 +254,15 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
               <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
                 <FormControl>
                   <Checkbox
-                    checked={field.value ?? false} // Ensure boolean
+                    checked={field.value ?? false}
                     onCheckedChange={(checked) => {
-                        const isChecked = Boolean(checked); // Ensure boolean value
+                        const isChecked = Boolean(checked);
                         field.onChange(isChecked);
-                        // Optionally reset frequency and recurringUntil when unchecked
                         if (!isChecked) {
                             form.setValue('frequency', null);
                             form.setValue('recurringUntil', null);
                         } else if (!form.getValues('dueDate')) {
-                            // If checking and no due date, maybe prompt user or show validation?
-                             form.trigger('dueDate'); // Trigger validation
+                             form.trigger('dueDate');
                         }
                     }}
                     id="recurring-checkbox"
@@ -291,9 +289,8 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
                         <FormItem>
                             <FormLabel>Frequency *</FormLabel>
                             <Select
-                                onValueChange={(value) => field.onChange(value as Frequency ?? null)} // Ensure correct type or null
-                                value={field.value ?? ""} // Handle null value for Select
-                                // defaultValue={field.value ?? undefined} // Handle null default
+                                onValueChange={(value) => field.onChange(value as Frequency ?? null)}
+                                value={field.value ?? ""}
                             >
                                 <FormControl>
                                     <SelectTrigger>
@@ -343,11 +340,10 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
                           <PopoverContent className="w-auto p-0" align="start">
                             <Calendar
                               mode="single"
-                              selected={field.value || undefined} // Handle null
-                              onSelect={(date) => field.onChange(date ?? null)} // Ensure null is passed if cleared
+                              selected={field.value || undefined}
+                              onSelect={(date) => field.onChange(date ?? null)}
                               disabled={(date) => {
                                 const dueDate = form.getValues('dueDate');
-                                // Disable dates on or before the due date if due date exists
                                 return dueDate ? date <= dueDate : false;
                               }}
                               initialFocus

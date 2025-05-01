@@ -6,30 +6,37 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter, // Optional for buttons inside if needed
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { TaskForm } from './task-form';
 import type { TaskFormData } from './task-form-schema';
 import type { Task } from '@/interfaces/task';
+// import { CURRENCY_SYMBOL } from '@/lib/constants'; // Import if needed
 
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: TaskFormData) => void;
   initialTaskData?: Task | null;
+  // currencySymbol?: string; // Optional: If form needs dynamic currency
 }
 
-export function TaskModal({ isOpen, onClose, onSubmit, initialTaskData }: TaskModalProps) {
+export function TaskModal({
+    isOpen,
+    onClose,
+    onSubmit,
+    initialTaskData,
+    // currencySymbol = CURRENCY_SYMBOL // Default or passed prop
+}: TaskModalProps) {
   const isEditing = !!initialTaskData;
   const title = isEditing ? "Edit Task" : "Add New Task";
   const description = isEditing
     ? "Update the details of your task."
-    : "Fill in the details for your new task, including its quadrant and risk level.";
+    : "Fill in the details, quadrant, and estimated monetary impact.";
 
-  // Function to handle submission and then close the modal
   const handleSubmit = (data: TaskFormData) => {
     onSubmit(data);
-    onClose(); // Close modal after successful submission logic is handled by parent
+    onClose();
   };
 
 
@@ -37,7 +44,7 @@ export function TaskModal({ isOpen, onClose, onSubmit, initialTaskData }: TaskMo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]"> {/* Adjust width as needed */}
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
@@ -51,13 +58,10 @@ export function TaskModal({ isOpen, onClose, onSubmit, initialTaskData }: TaskMo
              initialData={initialTaskData}
              onCancel={onClose}
              submitButtonText={isEditing ? "Save Changes" : "Add Task"}
+             // Pass currency symbol if needed by TaskForm implementation
+             // currencySymbol={currencySymbol}
             />
         </div>
-         {/* DialogFooter can be used if buttons aren't part of TaskForm
-         <DialogFooter>
-             Add buttons here if needed
-         </DialogFooter>
-         */}
       </DialogContent>
     </Dialog>
   );

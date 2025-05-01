@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { Task } from '@/interfaces/task';
@@ -7,31 +6,41 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { getRiskDisplayConfig } from '@/lib/risk';
-import { frequencyConfig } from '@/lib/constants';
+// Removed getRiskDisplayConfig import as it's no longer used directly for display
+import { frequencyConfig, impactScoreConfig, CURRENCY_SYMBOL } from '@/lib/constants';
 import { formatDistanceToNow, format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { CheckSquare, Square, Edit, Trash2, Repeat, AlertTriangle } from 'lucide-react'; // Added AlertTriangle for overdue
-import { useState, useEffect } from 'react'; // Import useEffect and useState for client-side date check
+import { CheckSquare, Square, Edit, Trash2, Repeat, AlertTriangle, Info } from 'lucide-react'; // Added AlertTriangle, Info
+import { useState, useEffect } from 'react';
+import { calculateImpactScore } from '@/lib/risk'; // Import function to get impact score details
 
 interface TaskCardProps {
   task: Task;
   onToggleComplete?: (id: string) => void;
-  onEdit?: (task: Task) => void; // Note: Will be hidden for completed tasks
+  onEdit?: (task: Task) => void;
   onDelete?: (id: string) => void;
 }
 
+// Function to determine badge color based on riskValue
+const getRiskValueColorClass = (riskValue: number): string => {
+    // Thresholds for color coding (adjust as needed)
+    if (riskValue >= 15) return 'bg-green-200 text-green-900 dark:bg-green-900/40 dark:text-green-100 border-green-300 dark:border-green-800/60'; // Critical Risk (e.g., High Impact * Do Quad)
+    if (riskValue >= 8) return 'bg-orange-200 text-orange-900 dark:bg-orange-900/40 dark:text-orange-100 border-orange-300 dark:border-orange-800/60'; // High/Medium Risk
+    return 'bg-yellow-200 text-yellow-900 dark:bg-yellow-900/40 dark:text-yellow-100 border-yellow-300 dark:border-yellow-800/60'; // Low Risk
+};
+
 export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardProps) {
-  const riskConfig = getRiskDisplayConfig(task.riskLevel);
+  // Removed riskConfig as we now use riskValue directly
   const [isOverdue, setIsOverdue] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const impactScoreDetails = impactScoreConfig.find(level => task.monetaryImpact < (level.upperBound ?? Infinity)) ?? impactScoreConfig[0];
 
-   // Check for overdue status on the client side after hydration
+
+   // Check for overdue status on the client side
    useEffect(() => {
-     setCurrentTime(new Date()); // Set current time on client
-     // Check if task has a due date, it's in the past, and the task is not complete
+     setCurrentTime(new Date());
      setIsOverdue(!!task.dueDate && task.dueDate < new Date() && !task.isComplete);
-   }, [task.dueDate, task.isComplete]); // Re-run if dueDate or completion status changes
+   }, [task.dueDate, task.isComplete]);
 
 
   const handleToggleComplete = (e: React.MouseEvent) => {
@@ -53,20 +62,16 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
     ? `Repeats ${frequencyConfig[task.frequency].label.toLowerCase()}${task.recurringUntil ? ` until ${format(task.recurringUntil, 'PPP')}` : ''}`
     : '';
 
-  // Display relative due date only if currentTime is available (client-side)
   const displayDueDate = task.dueDate && currentTime ? formatDistanceToNow(task.dueDate, { addSuffix: true, now: currentTime }) : 'No due date';
   const fullDueDate = task.dueDate ? format(task.dueDate, 'PPP p') : '';
-  // Display relative completed date only if currentTime is available
   const completedDate = task.completedAt && currentTime ? `Completed: ${formatDistanceToNow(task.completedAt, { addSuffix: true, now: currentTime })}` : '';
   const fullCompletedDate = task.completedAt ? format(task.completedAt, 'PPP p') : '';
 
-  // Define the style for the overdue badge - Use darker reds
   const overdueClass = 'bg-red-200 text-red-900 dark:bg-red-900/40 dark:text-red-100 border-red-300 dark:border-red-800/60';
-
+  const riskValueColorClass = getRiskValueColorClass(task.riskValue); // Get color based on risk value
 
   return (
     <TooltipProvider delayDuration={300}>
-        {/* Apply red border if overdue */}
         <Card className={cn("mb-2 transition-shadow hover:shadow-md", task.isComplete ? 'opacity-60' : '', isOverdue ? 'border-destructive/50 dark:border-destructive/70' : '')}>
           <CardHeader className="flex flex-row items-start justify-between pb-2">
             <div className="flex items-center space-x-2 flex-grow min-w-0">
@@ -80,17 +85,15 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
                 {task.isComplete ? <CheckSquare className="h-4 w-4 text-green-600 dark:text-green-500" /> : <Square className="h-4 w-4 text-muted-foreground" />}
               </Button>
               <div className="flex-grow min-w-0">
-                  {/* Apply red text color if overdue */}
                   <CardTitle className={cn(
                       "text-lg font-semibold break-words",
                       task.isComplete ? 'line-through text-muted-foreground' : '',
                       isOverdue ? 'text-destructive dark:text-destructive/90' : ''
                     )}>
-                      {/* Show overdue icon if applicable */}
                       {isOverdue && <AlertTriangle className="h-4 w-4 mr-1 inline-block text-destructive" aria-label="Overdue" />}
                       {task.title}
                   </CardTitle>
-                   {task.recurring && ( // Always show recurrence icon if recurring
+                   {task.recurring && (
                        <Tooltip>
                            <TooltipTrigger asChild>
                                <Repeat className="h-3 w-3 ml-1 inline-block text-muted-foreground cursor-help" />
@@ -100,18 +103,28 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
                            </TooltipContent>
                        </Tooltip>
                     )}
+                     {/* Tooltip for Monetary Impact */}
+                     <Tooltip>
+                           <TooltipTrigger asChild>
+                               <span className="ml-1 inline-block text-muted-foreground cursor-help">
+                                   <Info className="h-3 w-3"/>
+                               </span>
+                           </TooltipTrigger>
+                           <TooltipContent side="bottom" align="start">
+                               <p>Est. Impact: {CURRENCY_SYMBOL}{task.monetaryImpact.toLocaleString()}</p>
+                               <p className="text-xs text-muted-foreground">({impactScoreDetails.label}, Score: {impactScoreDetails.score})</p>
+                           </TooltipContent>
+                       </Tooltip>
               </div>
             </div>
-             {/* Conditionally apply overdue style or risk color */}
+             {/* Display Risk Value in Badge */}
              <Badge
-               // No variant needed, colorClass provides all styles including bg, text, border
                className={cn(
-                 "text-xs font-medium flex-shrink-0 ml-2 border", // Base badge styles (border added here for consistency)
-                  isOverdue ? overdueClass : riskConfig.colorClass // Apply specific color classes
+                 "text-xs font-medium flex-shrink-0 ml-2 border",
+                  isOverdue ? overdueClass : riskValueColorClass // Use overdue or risk value color
                )}
              >
-                {/* Show 'OVERDUE' label or risk label */}
-                {isOverdue ? 'OVERDUE' : riskConfig.label} ({riskConfig.quantity})
+                {isOverdue ? 'OVERDUE' : `Risk: ${task.riskValue}`}
              </Badge>
           </CardHeader>
           {task.description && (
@@ -124,7 +137,6 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
                  {task.isComplete && task.completedAt ? (
                      <Tooltip>
                          <TooltipTrigger asChild>
-                             {/* Show loading indicator until client time is ready */}
                              <span className="truncate cursor-help text-green-700 dark:text-green-400">
                                  {currentTime ? completedDate : 'Calculating...'}
                              </span>
@@ -137,8 +149,6 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
                  ) : task.dueDate ? (
                      <Tooltip>
                          <TooltipTrigger asChild>
-                             {/* Show loading indicator until client time is ready */}
-                             {/* Apply red text color if overdue */}
                              <span className={cn("truncate cursor-help", isOverdue ? 'text-destructive dark:text-destructive/90 font-medium' : '')}>
                                  Due: {currentTime ? displayDueDate : 'Calculating...'}
                              </span>
@@ -153,7 +163,6 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
                  )}
             </div>
              <div className="flex space-x-1 flex-shrink-0">
-                {/* Only show Edit button if task is NOT complete */}
                 {!task.isComplete && onEdit && (
                      <Tooltip>
                         <TooltipTrigger asChild>
