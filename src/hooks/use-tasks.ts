@@ -5,18 +5,18 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Task } from '@/interfaces/task';
 import type { TaskFormData } from '@/components/task-form-schema';
 import { calculateRiskLevel } from '@/lib/risk';
-import { Quadrant, Likelihood, Impact, RiskLevel, Frequency } from '@/lib/constants'; // Import Frequency
+import { Quadrant, Impact, RiskLevel, Frequency } from '@/lib/constants'; // Removed Likelihood
 
 // Helper to generate unique IDs (replace with a more robust solution like uuid if needed)
 const generateId = () => `task_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
 // Initial dummy data for demonstration - including recurring example
 const initialTasks: Task[] = [
-  { id: generateId(), title: 'Review Q3 budget', description: 'Final check before submission', dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), quadrant: Quadrant.Do, likelihood: Likelihood.High, impact: Impact.High, riskLevel: RiskLevel.Critical, isComplete: false, createdAt: new Date(), completedAt: null, recurring: false },
-  { id: generateId(), title: 'Plan team offsite', description: 'Location, activities, budget', dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), quadrant: Quadrant.Decide, likelihood: Likelihood.Medium, impact: Impact.Medium, riskLevel: RiskLevel.High, isComplete: false, createdAt: new Date(), completedAt: null, recurring: false },
-  { id: generateId(), title: 'Submit weekly report', description: 'Sales data and team updates', dueDate: new Date(new Date().setHours(17,0,0,0)), quadrant: Quadrant.Delegate, likelihood: Likelihood.Low, impact: Impact.Medium, riskLevel: RiskLevel.Medium, isComplete: false, createdAt: new Date(), completedAt: null, recurring: true, frequency: Frequency.Weekly, recurringUntil: null }, // Recurring task example
-  { id: generateId(), title: 'Clean up old project files', description: 'Low priority', dueDate: null, quadrant: Quadrant.Delete, likelihood: Likelihood.Low, impact: Impact.Low, riskLevel: RiskLevel.Low, isComplete: false, createdAt: new Date(), completedAt: null, recurring: false },
-    { id: generateId(), title: 'Urgent client call', description: 'Address critical issue', dueDate: new Date(Date.now() + 4 * 60 * 60 * 1000), quadrant: Quadrant.Do, likelihood: Likelihood.High, impact: Impact.Medium, riskLevel: RiskLevel.High, isComplete: false, createdAt: new Date(), completedAt: null, recurring: false },
+  { id: generateId(), title: 'Review Q3 budget', description: 'Final check before submission', dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), quadrant: Quadrant.Do, impact: Impact.High, riskLevel: RiskLevel.Critical, isComplete: false, createdAt: new Date(), completedAt: null, recurring: false }, // Likelihood removed
+  { id: generateId(), title: 'Plan team offsite', description: 'Location, activities, budget', dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), quadrant: Quadrant.Decide, impact: Impact.Medium, riskLevel: RiskLevel.High, isComplete: false, createdAt: new Date(), completedAt: null, recurring: false }, // Likelihood removed
+  { id: generateId(), title: 'Submit weekly report', description: 'Sales data and team updates', dueDate: new Date(new Date().setHours(17,0,0,0)), quadrant: Quadrant.Delegate, impact: Impact.Medium, riskLevel: RiskLevel.Medium, isComplete: false, createdAt: new Date(), completedAt: null, recurring: true, frequency: Frequency.Weekly, recurringUntil: null }, // Recurring task example, Likelihood removed
+  { id: generateId(), title: 'Clean up old project files', description: 'Low priority', dueDate: null, quadrant: Quadrant.Delete, impact: Impact.Low, riskLevel: RiskLevel.Low, isComplete: false, createdAt: new Date(), completedAt: null, recurring: false }, // Likelihood removed
+  { id: generateId(), title: 'Urgent client call', description: 'Address critical issue', dueDate: new Date(Date.now() + 4 * 60 * 60 * 1000), quadrant: Quadrant.Do, impact: Impact.Medium, riskLevel: RiskLevel.High, isComplete: false, createdAt: new Date(), completedAt: null, recurring: false }, // Likelihood removed
 ];
 
 // Key for local storage
@@ -43,6 +43,9 @@ export function useTasks() {
           frequency: Object.values(Frequency).includes(task.frequency) ? task.frequency : null,
           recurring: !!task.recurring,
           isComplete: !!task.isComplete, // Ensure boolean
+          // Ensure impact is valid enum value
+          impact: Object.values(Impact).includes(task.impact) ? task.impact : Impact.Low, // Add default
+          riskLevel: Object.values(RiskLevel).includes(task.riskLevel) ? task.riskLevel : RiskLevel.Low // Add default
         }));
         setAllTasks(parsedTasks);
       } else {
@@ -99,7 +102,7 @@ export function useTasks() {
     const newTask: Task = {
       ...formData,
       id: generateId(),
-      riskLevel: calculateRiskLevel(formData.likelihood, formData.impact),
+      riskLevel: calculateRiskLevel(formData.impact), // Pass only impact
       isComplete: false,
       createdAt: new Date(),
       completedAt: null, // Ensure completedAt is null for new tasks
@@ -123,7 +126,7 @@ export function useTasks() {
           ? {
               ...task,
               ...formData,
-              riskLevel: calculateRiskLevel(formData.likelihood, formData.impact),
+              riskLevel: calculateRiskLevel(formData.impact), // Pass only impact
               dueDate: formData.dueDate || null,
               recurring: formData.recurring ?? false,
               frequency: formData.recurring ? formData.frequency : null,

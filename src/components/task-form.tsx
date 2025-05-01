@@ -26,7 +26,7 @@ import { Label } from '@/components/ui/label'; // Import Label for Checkbox
 import { cn } from '@/lib/utils';
 import { CalendarIcon, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { Quadrant, Likelihood, Impact, Frequency, quadrantConfig, frequencyConfig } from '@/lib/constants'; // Import Frequency and config
+import { Quadrant, Impact, Frequency, quadrantConfig, frequencyConfig } from '@/lib/constants'; // Import Frequency and config, removed Likelihood
 import type { Task } from '@/interfaces/task';
 
 interface TaskFormProps {
@@ -44,7 +44,7 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
       description: initialData?.description || '',
       dueDate: initialData?.dueDate || null,
       quadrant: initialData?.quadrant || Quadrant.Decide, // Sensible default
-      likelihood: initialData?.likelihood || Likelihood.Low,
+      // likelihood: initialData?.likelihood || Likelihood.Low, // Removed likelihood
       impact: initialData?.impact || Impact.Low,
       recurring: initialData?.recurring || false,
       frequency: initialData?.frequency || null,
@@ -68,7 +68,7 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
           description: initialData.description || '',
           dueDate: initialData.dueDate || null,
           quadrant: initialData.quadrant,
-          likelihood: initialData.likelihood,
+          // likelihood: initialData.likelihood, // Removed likelihood
           impact: initialData.impact,
           recurring: initialData.recurring,
           frequency: initialData.frequency || null,
@@ -81,7 +81,7 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
               description: '',
               dueDate: null,
               quadrant: Quadrant.Decide,
-              likelihood: Likelihood.Low,
+              // likelihood: Likelihood.Low, // Removed likelihood
               impact: Impact.Low,
               recurring: false,
               frequency: null,
@@ -217,61 +217,34 @@ export function TaskForm({ onSubmit, initialData = null, onCancel, submitButtonT
         </div>
 
         {/* --- Risk Assessment Fields --- */}
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           <FormField
-              control={form.control}
-              name="likelihood"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>Likelihood (if not done/fails) *</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex flex-wrap gap-x-4 gap-y-2" // Use flex-wrap for better responsiveness
-                    >
-                      {Object.values(Likelihood).map((level) => (
-                         <FormItem key={level} className="flex items-center space-x-2 space-y-0">
-                             <FormControl>
-                               <RadioGroupItem value={level} id={`likelihood-${level}`} />
-                             </FormControl>
-                             <Label htmlFor={`likelihood-${level}`} className="font-normal">{level}</Label>
-                         </FormItem>
-                      ))}
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+         {/* Removed Likelihood section */}
+         <FormField
+            control={form.control}
+            name="impact"
+            render={({ field }) => (
+              <FormItem className="space-y-3">
+                <FormLabel>Impact (if not done/fails) *</FormLabel>
+                <FormControl>
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                    className="flex flex-wrap gap-x-4 gap-y-2" // Use flex-wrap
+                  >
+                     {Object.values(Impact).map((level) => (
+                       <FormItem key={level} className="flex items-center space-x-2 space-y-0">
+                           <FormControl>
+                             <RadioGroupItem value={level} id={`impact-${level}`} />
+                           </FormControl>
+                           <Label htmlFor={`impact-${level}`} className="font-normal">{level}</Label>
+                       </FormItem>
+                    ))}
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            <FormField
-              control={form.control}
-              name="impact"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>Impact (if not done/fails) *</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                      className="flex flex-wrap gap-x-4 gap-y-2" // Use flex-wrap
-                    >
-                       {Object.values(Impact).map((level) => (
-                         <FormItem key={level} className="flex items-center space-x-2 space-y-0">
-                             <FormControl>
-                               <RadioGroupItem value={level} id={`impact-${level}`} />
-                             </FormControl>
-                             <Label htmlFor={`impact-${level}`} className="font-normal">{level}</Label>
-                         </FormItem>
-                      ))}
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-        </div>
 
         {/* --- Recurrence Fields --- */}
         <FormField

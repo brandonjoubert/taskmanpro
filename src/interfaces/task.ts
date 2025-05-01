@@ -1,4 +1,4 @@
-import type { Quadrant, Likelihood, Impact, RiskLevel, Frequency } from '@/lib/constants';
+import type { Quadrant, Impact, RiskLevel, Frequency } from '@/lib/constants'; // Removed Likelihood
 
 export interface Task {
   id: string;
@@ -6,7 +6,7 @@ export interface Task {
   description?: string;
   dueDate?: Date | null;
   quadrant: Quadrant;
-  likelihood: Likelihood;
+  // likelihood: Likelihood; // Removed likelihood
   impact: Impact;
   riskLevel: RiskLevel;
   isComplete: boolean;

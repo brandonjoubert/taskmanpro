@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Quadrant, Likelihood, Impact, Frequency } from '@/lib/constants';
+import { Quadrant, Impact, Frequency } from '@/lib/constants'; // Removed Likelihood
 
 export const taskFormSchema = z.object({
   id: z.string().optional(), // Optional for creation, required for update
@@ -7,7 +7,7 @@ export const taskFormSchema = z.object({
   description: z.string().max(500, { message: 'Description must be 500 characters or less.' }).optional(),
   dueDate: z.date().nullable().optional(),
   quadrant: z.nativeEnum(Quadrant, { errorMap: () => ({ message: 'Please select a quadrant.' }) }),
-  likelihood: z.nativeEnum(Likelihood, { errorMap: () => ({ message: 'Please select likelihood.' }) }),
+  // likelihood: z.nativeEnum(Likelihood, { errorMap: () => ({ message: 'Please select likelihood.' }) }), // Removed likelihood
   impact: z.nativeEnum(Impact, { errorMap: () => ({ message: 'Please select impact.' }) }),
 
   // Recurrence fields
