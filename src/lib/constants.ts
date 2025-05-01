@@ -46,13 +46,13 @@ export const quadrantConfig: Record<Quadrant, { title: string; description: stri
   [Quadrant.Delete]: { title: 'Delete', description: 'Not Urgent, Not Important' },
 };
 
-// Updated riskLevelConfig with contrasting text/background and borders based on user request
+// Updated riskLevelConfig with contrasting text/background and borders for better visibility
 // Low = Yellow, Medium/High = Orange, Critical = Green
 export const riskLevelConfig: Record<RiskLevel, { label: string; quantity: number; colorClass: string; icon?: React.ComponentType<{ className?: string }> }> = {
-  [RiskLevel.Low]: { label: 'Low Risk', quantity: 1, colorClass: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-200 border-yellow-200 dark:border-yellow-700/50' }, // Yellow
-  [RiskLevel.Medium]: { label: 'Medium Risk', quantity: 2, colorClass: 'bg-orange-100 text-orange-800 dark:bg-orange-800/30 dark:text-orange-200 border-orange-200 dark:border-orange-700/50' }, // Orange
-  [RiskLevel.High]: { label: 'High Risk', quantity: 3, colorClass: 'bg-orange-100 text-orange-800 dark:bg-orange-800/30 dark:text-orange-200 border-orange-200 dark:border-orange-700/50' }, // Orange
-  [RiskLevel.Critical]: { label: 'Critical Risk', quantity: 4, colorClass: 'bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-200 border-green-200 dark:border-green-700/50' }, // Green
+  [RiskLevel.Low]: { label: 'Low Risk', quantity: 1, colorClass: 'bg-yellow-200 text-yellow-900 dark:bg-yellow-900/40 dark:text-yellow-100 border-yellow-300 dark:border-yellow-800/60' }, // Yellow
+  [RiskLevel.Medium]: { label: 'Medium Risk', quantity: 2, colorClass: 'bg-orange-200 text-orange-900 dark:bg-orange-900/40 dark:text-orange-100 border-orange-300 dark:border-orange-800/60' }, // Orange
+  [RiskLevel.High]: { label: 'High Risk', quantity: 3, colorClass: 'bg-orange-200 text-orange-900 dark:bg-orange-900/40 dark:text-orange-100 border-orange-300 dark:border-orange-800/60' }, // Orange
+  [RiskLevel.Critical]: { label: 'Critical Risk', quantity: 4, colorClass: 'bg-green-200 text-green-900 dark:bg-green-900/40 dark:text-green-100 border-green-300 dark:border-green-800/60' }, // Green
 };
 
 
@@ -65,3 +65,4 @@ export const frequencyConfig: Record<Frequency, { label: string }> = {
     [Frequency.Annually]: { label: 'Annually' },
     [Frequency.BiAnnually]: { label: 'Every 2 Years' },
 };
+

@@ -100,10 +100,10 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
             </div>
              {/* Conditionally apply overdue style */}
              <Badge
-               variant="outline"
+               variant="outline" // Keep variant="outline" for base styling, colors override
                className={cn(
-                 "text-xs font-medium flex-shrink-0 ml-2 border",
-                  isOverdue ? overdueClass : riskConfig.colorClass // Apply overdue class if overdue
+                 "text-xs font-medium flex-shrink-0 ml-2 border", // Ensure border class is present
+                  isOverdue ? overdueClass : riskConfig.colorClass // Apply specific color classes
                )}
              >
                 {/* Show 'OVERDUE' label or risk label */}
