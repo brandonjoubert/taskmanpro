@@ -72,10 +72,11 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
               </div>
             </div>
             <Badge
-              // Remove variant="outline" to allow background color and text color to dominate
+              // Remove variant="outline". Apply background and text color via riskConfig.colorClass
+              variant="outline" // Use outline variant as base, colors override below
               className={cn(
-                "text-xs font-medium text-white flex-shrink-0 ml-2", // Ensure text-white is applied
-                riskConfig.colorClass // Apply background color class
+                "text-xs font-medium flex-shrink-0 ml-2 border", // Keep base badge styles, add explicit border
+                riskConfig.colorClass // Apply background, text, and border color classes
               )}
             >
               {riskConfig.label} ({riskConfig.quantity})
