@@ -11,6 +11,7 @@ export interface Task {
   riskLevel: RiskLevel;
   isComplete: boolean;
   createdAt: Date;
+  completedAt?: Date | null; // Added field to track completion time
 
   // Recurrence fields
   recurring: boolean; // Is this task recurring?

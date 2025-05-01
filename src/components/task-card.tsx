@@ -1,20 +1,21 @@
+
 'use client';
 
 import type { Task } from '@/interfaces/task';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'; // Import Tooltip
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getRiskDisplayConfig } from '@/lib/risk';
-import { frequencyConfig } from '@/lib/constants'; // Import frequencyConfig
+import { frequencyConfig } from '@/lib/constants';
 import { formatDistanceToNow, format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { CheckSquare, Square, Edit, Trash2, Repeat } from 'lucide-react'; // Import Repeat icon
+import { CheckSquare, Square, Edit, Trash2, Repeat } from 'lucide-react';
 
 interface TaskCardProps {
   task: Task;
   onToggleComplete?: (id: string) => void;
-  onEdit?: (task: Task) => void;
+  onEdit?: (task: Task) => void; // Note: Will be hidden for completed tasks
   onDelete?: (id: string) => void;
 }
 
@@ -22,7 +23,7 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
   const riskConfig = getRiskDisplayConfig(task.riskLevel);
 
   const handleToggleComplete = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click event if clicking the checkbox
+    e.stopPropagation();
     onToggleComplete?.(task.id);
   };
 
@@ -40,26 +41,31 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
     ? `Repeats ${frequencyConfig[task.frequency].label.toLowerCase()}${task.recurringUntil ? ` until ${format(task.recurringUntil, 'PPP')}` : ''}`
     : '';
 
+  const displayDueDate = task.dueDate ? formatDistanceToNow(task.dueDate, { addSuffix: true }) : 'No due date';
+  const fullDueDate = task.dueDate ? format(task.dueDate, 'PPP p') : '';
+  const completedDate = task.completedAt ? `Completed: ${formatDistanceToNow(task.completedAt, { addSuffix: true })}` : '';
+  const fullCompletedDate = task.completedAt ? format(task.completedAt, 'PPP p') : '';
+
 
   return (
     <TooltipProvider delayDuration={300}>
         <Card className={cn("mb-2 transition-shadow hover:shadow-md", task.isComplete ? 'opacity-60' : '')}>
           <CardHeader className="flex flex-row items-start justify-between pb-2">
-            <div className="flex items-center space-x-2 flex-grow min-w-0"> {/* Ensure title can shrink */}
+            <div className="flex items-center space-x-2 flex-grow min-w-0">
              <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleToggleComplete}
-                className="h-6 w-6 flex-shrink-0" // Prevent checkbox from shrinking
+                className="h-6 w-6 flex-shrink-0"
                 aria-label={task.isComplete ? "Mark as incomplete" : "Mark as complete"}
               >
-                {task.isComplete ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+                {task.isComplete ? <CheckSquare className="h-4 w-4 text-green-600" /> : <Square className="h-4 w-4" />}
               </Button>
-              <div className="flex-grow min-w-0"> {/* Allow title and recurrence icon to wrap/shrink */}
-                  <CardTitle className={cn("text-lg font-semibold break-words", task.isComplete ? 'line-through' : '')}> {/* Allow title to break words */}
+              <div className="flex-grow min-w-0">
+                  <CardTitle className={cn("text-lg font-semibold break-words", task.isComplete ? 'line-through' : '')}>
                       {task.title}
                   </CardTitle>
-                   {task.recurring && (
+                   {task.recurring && !task.isComplete && ( // Show recurrence only if not complete? Or always? Show always for now.
                        <Tooltip>
                            <TooltipTrigger asChild>
                                <Repeat className="h-3 w-3 ml-1 inline-block text-muted-foreground cursor-help" />
@@ -72,11 +78,10 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
               </div>
             </div>
             <Badge
-              // Remove variant="outline". Apply background and text color via riskConfig.colorClass
-              variant="outline" // Use outline variant as base, colors override below
+              variant="outline"
               className={cn(
-                "text-xs font-medium flex-shrink-0 ml-2 border", // Keep base badge styles, add explicit border
-                riskConfig.colorClass // Apply background, text, and border color classes
+                "text-xs font-medium flex-shrink-0 ml-2 border",
+                riskConfig.colorClass
               )}
             >
               {riskConfig.label} ({riskConfig.quantity})
@@ -88,25 +93,39 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
             </CardContent>
           )}
           <CardFooter className="flex justify-between items-center pt-0 pb-3 text-xs text-muted-foreground">
-             <div className="min-w-0"> {/* Allow due date text to shrink/wrap */}
-                {task.dueDate ? (
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <span className="truncate cursor-help"> {/* Truncate if too long */}
-                                Due: {formatDistanceToNow(task.dueDate, { addSuffix: true })}
-                            </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>{format(task.dueDate, 'PPP p')}</p> {/* Show full date/time on hover */}
-                            {recurringInfo && <p className="mt-1 text-xs">{recurringInfo}</p>}
-                        </TooltipContent>
-                    </Tooltip>
-                ) : (
-                   <span>No due date</span>
-                )}
+             <div className="min-w-0">
+                 {task.isComplete && task.completedAt ? (
+                     <Tooltip>
+                         <TooltipTrigger asChild>
+                             <span className="truncate cursor-help text-green-700 dark:text-green-400">
+                                 {completedDate}
+                             </span>
+                         </TooltipTrigger>
+                         <TooltipContent>
+                             <p>{fullCompletedDate}</p>
+                             {/* Optionally show original due date if needed */}
+                             {task.dueDate && <p className="mt-1 text-xs">Originally due: {fullDueDate}</p>}
+                         </TooltipContent>
+                     </Tooltip>
+                 ) : task.dueDate ? (
+                     <Tooltip>
+                         <TooltipTrigger asChild>
+                             <span className="truncate cursor-help">
+                                 Due: {displayDueDate}
+                             </span>
+                         </TooltipTrigger>
+                         <TooltipContent>
+                             <p>{fullDueDate}</p>
+                             {recurringInfo && <p className="mt-1 text-xs">{recurringInfo}</p>}
+                         </TooltipContent>
+                     </Tooltip>
+                 ) : (
+                    <span>No due date</span>
+                 )}
             </div>
-             <div className="flex space-x-1 flex-shrink-0"> {/* Prevent buttons shrinking */}
-                {onEdit && (
+             <div className="flex space-x-1 flex-shrink-0">
+                {/* Only show Edit button if task is NOT complete */}
+                {!task.isComplete && onEdit && (
                      <Tooltip>
                         <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleEdit} aria-label="Edit task">

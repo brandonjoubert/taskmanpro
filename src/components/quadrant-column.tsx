@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface QuadrantColumnProps {
   quadrant: Quadrant;
-  tasks: Task[];
+  tasks: Task[]; // Should receive only incomplete tasks for this quadrant
   onToggleComplete?: (id: string) => void;
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (id: string) => void;
@@ -15,6 +15,8 @@ interface QuadrantColumnProps {
 
 export function QuadrantColumn({ quadrant, tasks, onToggleComplete, onEditTask, onDeleteTask }: QuadrantColumnProps) {
   const config = quadrantConfig[quadrant];
+  // Explicitly filter for incomplete tasks just to be safe, though parent should handle this
+  const incompleteTasksInQuadrant = tasks.filter(task => !task.isComplete);
 
   return (
     <Card className="flex flex-col h-full shadow-md">
@@ -24,10 +26,10 @@ export function QuadrantColumn({ quadrant, tasks, onToggleComplete, onEditTask, 
       </CardHeader>
       <CardContent className="flex-grow p-2 pt-0 overflow-hidden">
         <ScrollArea className="h-full pr-3">
-            {tasks.length === 0 ? (
+            {incompleteTasksInQuadrant.length === 0 ? (
              <p className="text-sm text-muted-foreground text-center py-4">No tasks in this quadrant.</p>
             ) : (
-             tasks.map((task) => (
+             incompleteTasksInQuadrant.map((task) => (
                 <TaskCard
                   key={task.id}
                   task={task}

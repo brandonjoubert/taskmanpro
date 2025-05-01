@@ -3,7 +3,7 @@ import { Quadrant } from '@/lib/constants';
 import { QuadrantColumn } from './quadrant-column';
 
 interface MatrixViewProps {
-  tasks: Task[];
+  tasks: Task[]; // Should now only receive incomplete tasks
   onToggleComplete?: (id: string) => void;
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (id: string) => void;
@@ -11,7 +11,8 @@ interface MatrixViewProps {
 
 export function MatrixView({ tasks, onToggleComplete, onEditTask, onDeleteTask }: MatrixViewProps) {
   const getTasksForQuadrant = (quadrant: Quadrant) => {
-    return tasks.filter((task) => task.quadrant === quadrant);
+    // Filter already happened in useTasks, but double-check just in case
+    return tasks.filter((task) => task.quadrant === quadrant && !task.isComplete);
   };
 
   return (
