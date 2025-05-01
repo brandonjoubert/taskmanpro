@@ -45,11 +45,11 @@ export const quadrantConfig: Record<Quadrant, { title: string; description: stri
   [Quadrant.Delete]: { title: 'Delete', description: 'Not Urgent, Not Important' },
 };
 
-export const riskLevelConfig: Record<RiskLevel, { label: string; colorClass: string; icon?: React.ComponentType<{ className?: string }> }> = {
-  [RiskLevel.Low]: { label: 'Low Risk', colorClass: 'bg-green-500' }, // Using direct colors for distinction, consider theme vars if needed
-  [RiskLevel.Medium]: { label: 'Medium Risk', colorClass: 'bg-yellow-500' },
-  [RiskLevel.High]: { label: 'High Risk', colorClass: 'bg-orange-500' },
-  [RiskLevel.Critical]: { label: 'Critical Risk', colorClass: 'bg-red-600' }, // Use accent potentially: 'bg-accent'
+export const riskLevelConfig: Record<RiskLevel, { label: string; quantity: number; colorClass: string; icon?: React.ComponentType<{ className?: string }> }> = {
+  [RiskLevel.Low]: { label: 'Low Risk', quantity: 1, colorClass: 'bg-green-500' }, // Using direct colors for distinction, consider theme vars if needed
+  [RiskLevel.Medium]: { label: 'Medium Risk', quantity: 2, colorClass: 'bg-yellow-500' },
+  [RiskLevel.High]: { label: 'High Risk', quantity: 3, colorClass: 'bg-orange-500' },
+  [RiskLevel.Critical]: { label: 'Critical Risk', quantity: 4, colorClass: 'bg-red-600' }, // Use accent potentially: 'bg-accent'
 };
 
 // Display names for Frequency enum

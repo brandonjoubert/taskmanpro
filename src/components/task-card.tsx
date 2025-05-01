@@ -75,7 +75,7 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete }: TaskCardP
               variant="outline"
               className={cn("text-xs font-medium text-white flex-shrink-0 ml-2", riskConfig.colorClass)} // Prevent badge shrinking, add margin
             >
-              {riskConfig.label}
+              {riskConfig.label} ({riskConfig.quantity})
             </Badge>
           </CardHeader>
           {task.description && (
