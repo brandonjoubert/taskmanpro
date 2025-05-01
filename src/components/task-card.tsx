@@ -35,7 +35,8 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete, currencySym
   // Removed riskConfig as we now use riskValue directly
   const [isOverdue, setIsOverdue] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
-  const impactScoreDetails = impactScoreConfig.find(level => task.monetaryImpact < (level.upperBound ?? Infinity)) ?? impactScoreConfig[0];
+  // Recalculate impact score details using the current currency symbol in labels
+  const impactScoreDetails = calculateImpactScore(task.monetaryImpact, currencySymbol);
 
 
    // Check for overdue status on the client side
@@ -191,3 +192,4 @@ export function TaskCard({ task, onToggleComplete, onEdit, onDelete, currencySym
     </TooltipProvider>
   );
 }
+

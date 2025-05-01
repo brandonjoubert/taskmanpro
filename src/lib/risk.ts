@@ -1,19 +1,24 @@
-import { Quadrant, impactScoreConfig, quadrantConfig } from './constants';
+import { Quadrant, getImpactScoreConfig, quadrantConfig, CURRENCY_SYMBOL } from './constants';
 import type { Task } from '@/interfaces/task';
 
 /**
  * Calculates the Impact Score (1-5) based on the monetary impact value.
  * Uses the ranges defined in constants.ts.
+ * Returns both the score and the dynamically generated label.
  */
-export function calculateImpactScore(monetaryImpact: number): number {
+export function calculateImpactScore(monetaryImpact: number, currencySymbol: string = CURRENCY_SYMBOL): { score: number; label: string } {
+  const impactConfig = getImpactScoreConfig(currencySymbol);
   // Find the first configuration where the monetary impact is less than the upper bound
   // or where the upper bound is null (infinity).
-  const config = impactScoreConfig.find(
+  const config = impactConfig.find(
     (level) => monetaryImpact < (level.upperBound ?? Infinity)
   );
 
   // Default to the lowest score if something goes wrong (e.g., negative impact)
-  return config?.score ?? 1;
+  return {
+      score: config?.score ?? impactConfig[0].score,
+      label: config?.label ?? impactConfig[0].label
+  };
 }
 
 /**
@@ -27,7 +32,8 @@ export function getQuadrantScore(quadrant: Quadrant): number {
  * Calculates the final Risk Value by multiplying Impact Score and Quadrant Score.
  */
 export function calculateRiskValue(monetaryImpact: number, quadrant: Quadrant): number {
-  const impactScore = calculateImpactScore(monetaryImpact);
+  // We only need the score part for the risk value calculation
+  const impactScore = calculateImpactScore(monetaryImpact).score;
   const quadrantScore = getQuadrantScore(quadrant);
   return impactScore * quadrantScore;
 }

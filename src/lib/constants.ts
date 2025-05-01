@@ -30,15 +30,19 @@ export const quadrantConfig: Record<Quadrant, { title: string; description: stri
   [Quadrant.Delete]: { title: 'Delete', description: 'Not Urgent, Not Important', score: 1 },
 };
 
-// Define monetary impact levels and their scores
+// Define monetary impact levels and their scores as a function
 // The upper bound is exclusive (e.g., 0-100 means >= 0 AND < 100)
-export const impactScoreConfig: Array<{ upperBound: number | null; score: number; label: string }> = [
-    { upperBound: 100, score: 1, label: `Very Low (< ${CURRENCY_SYMBOL}100)` },    // Score 1 for impact < 100
-    { upperBound: 1000, score: 2, label: `Low (${CURRENCY_SYMBOL}100 - ${CURRENCY_SYMBOL}999)` },   // Score 2 for impact 100 - 999
-    { upperBound: 5000, score: 3, label: `Medium (${CURRENCY_SYMBOL}1k - ${CURRENCY_SYMBOL}5k)` },  // Score 3 for impact 1000 - 4999
-    { upperBound: 20000, score: 4, label: `High (${CURRENCY_SYMBOL}5k - ${CURRENCY_SYMBOL}20k)` },  // Score 4 for impact 5000 - 19999
-    { upperBound: null, score: 5, label: `Critical (>= ${CURRENCY_SYMBOL}20k)` }, // Score 5 for impact >= 20000 (null upperBound means infinity)
+// This allows dynamic label generation based on the currency symbol
+export const getImpactScoreConfig = (currencySymbol: string = CURRENCY_SYMBOL): Array<{ upperBound: number | null; score: number; label: string }> => [
+    { upperBound: 100, score: 1, label: `Very Low (< ${currencySymbol}100)` },    // Score 1 for impact < 100
+    { upperBound: 1000, score: 2, label: `Low (${currencySymbol}100 - ${currencySymbol}999)` },   // Score 2 for impact 100 - 999
+    { upperBound: 5000, score: 3, label: `Medium (${currencySymbol}1k - ${currencySymbol}5k)` },  // Score 3 for impact 1000 - 4999
+    { upperBound: 20000, score: 4, label: `High (${currencySymbol}5k - ${currencySymbol}20k)` },  // Score 4 for impact 5000 - 19999
+    { upperBound: null, score: 5, label: `Critical (>= ${currencySymbol}20k)` }, // Score 5 for impact >= 20000 (null upperBound means infinity)
 ].sort((a, b) => a.score - b.score); // Ensure sorted by score for easy lookup
+
+// Export the default configuration using the default symbol
+export const impactScoreConfig = getImpactScoreConfig();
 
 
 // Display names for Frequency enum
