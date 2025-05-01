@@ -1,4 +1,5 @@
 
+
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { Task } from '@/interfaces/task';
@@ -29,9 +30,12 @@ export function QuadrantColumn({
     activeTaskId
 }: QuadrantColumnProps) {
   const config = quadrantConfig[quadrant];
-  // Explicitly filter for incomplete tasks just to be safe, though parent should handle this
-  const incompleteTasksInQuadrant = tasks.filter(task => !task.isComplete);
-  const taskIds = incompleteTasksInQuadrant.map(task => task.id);
+  // Filter for incomplete tasks and sort by riskValue descending
+  const sortedIncompleteTasksInQuadrant = tasks
+    .filter(task => !task.isComplete)
+    .sort((a, b) => b.riskValue - a.riskValue); // Sort by riskValue descending
+
+  const taskIds = sortedIncompleteTasksInQuadrant.map(task => task.id);
 
   const { setNodeRef, isOver } = useDroppable({
     id: quadrant, // Use the Quadrant enum value as the ID for the droppable area
@@ -57,12 +61,12 @@ export function QuadrantColumn({
             items={taskIds} // Provide the IDs of the sortable items (tasks)
             strategy={verticalListSortingStrategy} // Use vertical list sorting strategy
           >
-            {incompleteTasksInQuadrant.length === 0 ? (
+            {sortedIncompleteTasksInQuadrant.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-3"> {/* Smaller text, adjusted padding */}
                 {isDraggingOver ? "Drop task here" : "No tasks in this quadrant."}
               </p>
             ) : (
-              incompleteTasksInQuadrant.map((task) => (
+              sortedIncompleteTasksInQuadrant.map((task) => (
                 <TaskCard
                   key={task.id}
                   task={task}
