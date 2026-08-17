@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Add Task{% endblock %}
+{% block content %}
+    <h1>Add New Task</h1>
+    <form method="POST">
+        <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input type="text" name="title" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control"></textarea>
+        </div>
+        <div class="mb-3 form-check">
+            <input type="checkbox" name="is_recurrent" class="form-check-input" id="recurrent">
+            <label class="form-check-label" for="recurrent">Recurrent Task</label>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Start Date</label>
+            <input type="date" name="start_date" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Recurrence Interval (days; 0 for one-off)</label>
+            <input type="number" name="recurrence_interval" class="form-control" value="0" min="0">
+        </div>
+        <!-- Importance Selection with Criteria -->
+        <div class="mb-3">
+            <label class="form-label">Importance</label>
+            <p class="text-muted">Select the level that best describes how much this task aligns with your long-term goals.</p>
+            <div class="form-check">
+                <input type="radio" name="importance" value="1" class="form-check-input" required>
+                <label class="form-check-label">1 - Minimal impact on goals</label>
+            </div>
+            <div class="form-check">
+                <input type="radio" name="importance" value="2" class="form-check-input">
+                <label class="form-check-label">2 - Some impact, not critical</label>
+            </div>
+            <div class="form-check">
+                <input type="radio" name="importance" value="3" class="form-check-input">
+                <label class="form-check-label">3 - Important for medium-term goals</label>
+            </div>
+            <div class="form-check">
+                <input type="radio" name="importance" value="4" class="form-check-input">
+                <label class="form-check-label">4 - Very important for long-term goals</label>
+            </div>
+            <div class="form-check">
+                <input type="radio" name="importance" value="5" class="form-check-input">
+                <label class="form-check-label">5 - Critical for success</label>
+            </div>
+        </div>
+        <!-- Risk Selection with Criteria -->
+        <div class="mb-3">
+            <label class="form-label">Risk</label>
+            <p class="text-muted">Select the level that best describes the potential negative impact if this task is not completed on time.</p>
+            <div class="form-check">
+                <input type="radio" name="risk" value="1" class="form-check-input" required>
+                <label class="form-check-label">1 - No significant consequences</label>
+            </div>
+            <div class="form-check">
+                <input type="radio" name="risk" value="2" class="form-check-input">
+                <label class="form-check-label">2 - Minor inconvenience or delay</label>
+            </div>
+            <div class="form-check">
+                <input type="radio" name="risk" value="3" class="form-check-input">
+                <label class="form-check-label">3 - Moderate impact on project</label>
+            </div>
+            <div class="form-check">
+                <input type="radio" name="risk" value="4" class="form-check-input">
+                <label class="form-check-label">4 - Significant impact, affects success</label>
+            </div>
+            <div class="form-check">
+                <input type="radio" name="risk" value="5" class="form-check-input">
+                <label class="form-check-label">5 - Critical impact, could lead to failure</label>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Task</button>
+    </form>
+{% endblock %}

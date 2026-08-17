@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+    <div class="row justify-content-center"> <!-- Removed w-100, centering handled by base -->
+        <!-- Left Card: Image -->
+        <div class="col-md-5">
+            <div class="card h-100">
+                <img src="{{ url_for('static', filename='taskman.jpg') }}" class="card-img-top" alt="Taskman Pro Image">
+                <div class="card-body">
+                    <h5 class="card-title">Task Management</h5>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Card: Description -->
+        <div class="col-md-5">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">About Taskman Pro</h5>
+                    <p class="card-text">Taskman Pro is your professional solution for managing one-off and recurrent tasks efficiently. Prioritize your workload based on urgency, importance, and risk.</p>
+                    <hr>
+                    <p class="card-text"><small class="text-muted">Version: 1.0</small></p>
+                    <p class="card-text"><small class="text-muted">Author: Brandon Joubert</small></p>
+                    <p class="card-text"><small class="text-muted">&copy; {{ current_year }} Gensix Technology. All rights reserved.</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

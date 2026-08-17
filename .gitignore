@@ -1,0 +1,49 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+cookies.txt
+headers.txt
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Node / JS
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# PHP / Composer
+/vendor/
+composer.phar
+
+# Logs
+*.log
+logs/
+
+# Data / caches / builds
+*.db
+*.sqlite3
+built/
+bin/
+obj/
+.sass-cache/
+.DS_Store
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.~lock.*#

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Task List{% endblock %}
+{% block content %}
+    <h1>Task List</h1>
+    <div class="row">
+        <!-- One-off Tasks (Left Side) -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">One-off Tasks</div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <colgroup>
+                                <col style="width: 35%;"> <!-- Task Name -->
+                                <col style="width: 10%;"> <!-- Notes -->
+                                <col style="width: 30%;"> <!-- Due Date -->
+                                <col style="width: 10%;"> <!-- Priority Score -->
+                                <col style="width: 15%;"> <!-- Actions -->
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>Task Name</th>
+                                    <th>Notes</th>
+                                    <th>Due Date</th>
+                                    <th>Priority Score</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in task_list if not item.task.is_recurrent %}
+                                    <tr {% if item.due_date < today %}class="table-danger"{% endif %}>
+                                        <td>{{ item.task.title }}</td>
+                                        <td>
+                                            <a href="{{ url_for('edit_task', task_id=item.task.id) }}" class="btn btn-sm btn-info">
+                                                <i class="bi bi-journal-text"></i>
+                                            </a>
+                                        </td>
+                                        <td>{{ item.due_date }}</td>
+                                        <td>{{ item.priority }}</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('complete_task', task_id=item.task.id) }}" class="btn btn-success btn-sm">Complete</a>
+                                                <a href="{{ url_for('delete_task', task_id=item.task.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this task?');">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Recurrent Tasks (Right Side) -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Recurrent Tasks</div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <colgroup>
+                                <col style="width: 35%;"> <!-- Task Name -->
+                                <col style="width: 10%;"> <!-- Notes -->
+                                <col style="width: 30%;"> <!-- Next Due Date -->
+                                <col style="width: 10%;"> <!-- Priority Score -->
+                                <col style="width: 15%;"> <!-- Actions -->
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>Task Name</th>
+                                    <th>Notes</th>
+                                    <th>Next Due Date</th>
+                                    <th>Priority Score</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in task_list if item.task.is_recurrent %}
+                                    <tr {% if item.due_date < today %}class="table-danger"{% endif %}>
+                                        <td>
+                                            {% if item.days_until_due >= 0 and item.days_until_due < 8 %}
+                                                <i class="bi bi-exclamation-triangle text-danger"></i>
+                                            {% endif %}
+                                            {{ item.task.title }}
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('edit_task', task_id=item.task.id) }}" class="btn btn-sm btn-info">
+                                                <i class="bi bi-journal-text"></i>
+                                            </a>
+                                        </td>
+                                        <td>{{ item.due_date }}</td>
+                                        <td>{{ item.priority }}</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('complete_task', task_id=item.task.id) }}" class="btn btn-success btn-sm">Complete</a>
+                                                <a href="{{ url_for('delete_task', task_id=item.task.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this task?');">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
