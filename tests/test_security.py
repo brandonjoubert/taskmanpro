@@ -58,7 +58,8 @@ class TestSafeHTMLRendering:
             'risk': '1',
         })
         resp = client.get('/tasks')
-        assert b'onerror=alert' not in resp.data
+        assert b'<img src=x' not in resp.data
+        assert b'&lt;img src=x' in resp.data
 
 
 class TestShutdownRemoved:
