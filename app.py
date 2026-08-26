@@ -176,7 +176,20 @@ def task_list():
                 'days_until_due': days_until_due,
             })
     task_list.sort(key=lambda x: (-x['priority'], x['due_date'], x['task'].id))
-    return render_template('task_list.html', task_list=task_list, today=today, is_home=False)
+
+    oneoff_count = sum(1 for t in task_list if not t['task'].is_recurrent)
+    recurrent_count = sum(1 for t in task_list if t['task'].is_recurrent)
+    overdue_count = sum(1 for t in task_list if t['due_date'] < today)
+
+    due_this_week_titles = set()
+    for t in task_list:
+        if 0 <= t['days_until_due'] <= 7:
+            due_this_week_titles.add(t['task'].title)
+    due_this_week_count = len(due_this_week_titles)
+
+    return render_template('task_list.html', task_list=task_list, today=today, is_home=False,
+                           oneoff_count=oneoff_count, recurrent_count=recurrent_count,
+                           overdue_count=overdue_count, due_this_week_count=due_this_week_count)
 
 
 @app.route('/add_task', methods=['GET', 'POST'])

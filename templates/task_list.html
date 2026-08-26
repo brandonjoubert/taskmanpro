@@ -14,25 +14,25 @@
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="stat-card">
-                <div class="stat-value">{{ task_list|selectattr('task.is_recurrent', 'false')|list|length }}</div>
+                <div class="stat-value">{{ oneoff_count }}</div>
                 <div class="stat-label">One-off</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
-                <div class="stat-value">{{ task_list|selectattr('task.is_recurrent', 'true')|list|length }}</div>
+                <div class="stat-value">{{ recurrent_count }}</div>
                 <div class="stat-label">Recurrent</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
-                <div class="stat-value">{{ task_list|selectattr('due_date', 'lt', today)|list|length }}</div>
+                <div class="stat-value">{{ overdue_count }}</div>
                 <div class="stat-label">Overdue</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
-                <div class="stat-value">{{ task_list|selectattr('days_until_due', 'ge', 0)|selectattr('days_until_due', 'le', 7)|list|length }}</div>
+                <div class="stat-value">{{ due_this_week_count }}</div>
                 <div class="stat-label">Due This Week</div>
             </div>
         </div>
