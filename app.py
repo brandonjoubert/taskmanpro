@@ -136,6 +136,32 @@ def index():
 def task_list():
     today = date.today()
     tasks = Task.query.all()
+
+    for task in tasks:
+        if task.is_recurrent and task.due_date and task.due_date <= today:
+            existing = Task.query.filter_by(
+                title=task.title,
+                is_recurrent=False,
+                due_date=task.due_date,
+            ).first()
+            if not existing:
+                one_off = Task(
+                    title=task.title,
+                    description=task.description,
+                    is_recurrent=False,
+                    due_date=task.due_date,
+                    recurrence_interval=0,
+                    importance=task.importance,
+                    risk=task.risk,
+                    is_completed=False,
+                )
+                db.session.add(one_off)
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+    tasks = Task.query.all()
     task_list = []
     for task in tasks:
         due_date = get_effective_due_date(task, today)

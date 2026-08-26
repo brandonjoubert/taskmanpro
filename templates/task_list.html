@@ -69,7 +69,7 @@
                                 {% for item in task_list if item.task.is_recurrent %}
                                     <tr {% if item.due_date < today %}class="table-danger"{% endif %}>
                                         <td>
-                                            {% if item.due_date <= today %}
+                                            {% if item.days_until_due >= 0 and item.days_until_due <= 7 %}
                                                 <i class="bi bi-circle-fill text-danger"></i>
                                             {% endif %}
                                             <a href="{{ url_for('edit_task', task_id=item.task.id) }}" class="text-decoration-none">
