@@ -277,6 +277,18 @@ def view_task(task_id):
                            urgency=urgency, today=today, is_home=False)
 
 
+@app.route('/save_notes/<int:task_id>', methods=['POST'])
+def save_notes(task_id):
+    task = Task.query.get_or_404(task_id)
+    task.description = request.form.get('description', '')
+    task.updated_at = datetime.utcnow()
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+    return redirect(url_for('view_task', task_id=task.id))
+
+
 @app.route('/edit_task/<int:task_id>', methods=['GET', 'POST'])
 def edit_task(task_id):
     task = Task.query.get_or_404(task_id)

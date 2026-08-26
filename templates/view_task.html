@@ -72,19 +72,21 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span><i class="bi bi-text-left me-2"></i>Notes</span>
-                    {% if task.description %}
                     <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#notesCollapse">
                         <i class="bi bi-chevron-down" id="notesToggleIcon"></i>
                     </button>
-                    {% endif %}
                 </div>
-                <div class="collapse {% if not task.description %}show{% endif %}" id="notesCollapse">
+                <div class="collapse show" id="notesCollapse">
                     <div class="card-body">
-                        {% if task.description %}
-                            <p class="mb-0" style="white-space: pre-wrap;">{{ task.description }}</p>
-                        {% else %}
-                            <p class="text-muted mb-0">No notes added yet.</p>
-                        {% endif %}
+                        <form method="POST" action="{{ url_for('save_notes', task_id=task.id) }}">
+                            <textarea name="description" class="form-control mb-2" rows="4" placeholder="Add notes...">{{ task.description or '' }}</textarea>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">Changes save instantly</small>
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-check-lg me-1"></i>Save Notes
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
