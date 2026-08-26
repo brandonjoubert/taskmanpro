@@ -61,7 +61,7 @@
                                 {% for item in oneoff_tasks %}
                                     <tr class="{{ 'overdue-row' if item.due_date < today }}">
                                         <td>
-                                            <a href="{{ url_for('edit_task', task_id=item.task.id) }}" class="task-title">
+                                            <a href="{{ url_for('view_task', task_id=item.task.id) }}" class="task-title">
                                                 {{ item.task.title }}
                                             </a>
                                             {% if item.task.description %}

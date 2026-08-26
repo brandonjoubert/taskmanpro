@@ -264,6 +264,19 @@ def complete_task(task_id):
     return redirect(url_for('task_list'))
 
 
+@app.route('/view_task/<int:task_id>')
+def view_task(task_id):
+    task = Task.query.get_or_404(task_id)
+    today = date.today()
+    due_date = get_effective_due_date(task, today)
+    urgency = get_urgency(due_date, today) if due_date else 0
+    priority = urgency + task.importance + task.risk if due_date else 0
+    days_until_due = (due_date - today).days if due_date and due_date >= today else -1
+    return render_template('view_task.html', task=task, due_date=due_date,
+                           priority=priority, days_until_due=days_until_due,
+                           urgency=urgency, today=today, is_home=False)
+
+
 @app.route('/edit_task/<int:task_id>', methods=['GET', 'POST'])
 def edit_task(task_id):
     task = Task.query.get_or_404(task_id)

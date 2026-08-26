@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}{{ task.title }}{% endblock %}
+{% block content %}
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1>{{ task.title }}</h1>
+            <p>{{ 'Recurrent' if task.is_recurrent else 'One-off' }} task</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('edit_task', task_id=task.id) }}" class="btn btn-outline-secondary">
+                <i class="bi bi-pencil me-1"></i>Edit
+            </a>
+            <a href="{{ url_for('task_list') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Back
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Due Date</label>
+                            <div class="fw-semibold {% if due_date and due_date < today %}text-danger{% elif days_until_due <= 3 %}text-warning{% endif %}">
+                                {% if due_date %}
+                                    {{ due_date.strftime('%B %d, %Y') }}
+                                    {% if days_until_due >= 0 %}
+                                        <small class="text-muted ms-2">({{ days_until_due }}d)</small>
+                                    {% else %}
+                                        <small class="text-danger ms-2">(overdue)</small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">Completed</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Priority</label>
+                            <div>
+                                <span class="badge badge-priority priority-{{ 'critical' if priority >= 12 else 'high' if priority >= 9 else 'medium' if priority >= 6 else 'low' if priority >= 4 else 'minimal' }} fs-6">
+                                    {{ priority }}
+                                </span>
+                                <small class="text-muted ms-2">Urgency {{ urgency }} + Importance {{ task.importance }} + Risk {{ task.risk }}</small>
+                            </div>
+                        </div>
+                        {% if task.is_recurrent %}
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Recurrence</label>
+                            <div class="fw-semibold">Every {{ task.recurrence_interval }} days</div>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">Status</label>
+                            <div>
+                                {% if task.is_completed %}
+                                    <span class="badge bg-success">Completed</span>
+                                {% elif due_date and due_date < today %}
+                                    <span class="badge bg-danger">Overdue</span>
+                                {% elif days_until_due <= 3 %}
+                                    <span class="badge bg-warning text-dark">Due Soon</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Active</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-text-left me-2"></i>Notes</span>
+                    {% if task.description %}
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#notesCollapse">
+                        <i class="bi bi-chevron-down" id="notesToggleIcon"></i>
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="collapse {% if not task.description %}show{% endif %}" id="notesCollapse">
+                    <div class="card-body">
+                        {% if task.description %}
+                            <p class="mb-0" style="white-space: pre-wrap;">{{ task.description }}</p>
+                        {% else %}
+                            <p class="text-muted mb-0">No notes added yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="bi bi-info-circle me-2"></i>Details
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0 small">
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Created</span>
+                            <span>{{ task.created_at.strftime('%b %d, %Y') }}</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2 border-bottom">
+                            <span class="text-muted">Updated</span>
+                            <span>{{ task.updated_at.strftime('%b %d, %Y') }}</span>
+                        </li>
+                        <li class="d-flex justify-content-between py-2">
+                            <span class="text-muted">ID</span>
+                            <span>#{{ task.id }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <i class="bi bi-lightning-charge me-2"></i>Actions
+                </div>
+                <div class="card-body d-flex flex-column gap-2">
+                    {% if not task.is_completed %}
+                    <form method="POST" action="{{ url_for('complete_task', task_id=task.id) }}">
+                        <button type="submit" class="btn btn-complete w-100">
+                            <i class="bi bi-check-lg me-1"></i>Complete Task
+                        </button>
+                    </form>
+                    {% endif %}
+                    <a href="{{ url_for('edit_task', task_id=task.id) }}" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-pencil me-1"></i>Edit Task
+                    </a>
+                    <form method="POST" action="{{ url_for('delete_task', task_id=task.id) }}">
+                        <button type="submit" class="btn btn-delete w-100" onclick="return confirm('Delete this task?');">
+                            <i class="bi bi-trash3 me-1"></i>Delete Task
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const collapseEl = document.getElementById('notesCollapse');
+        const icon = document.getElementById('notesToggleIcon');
+        if (collapseEl && icon) {
+            collapseEl.addEventListener('show.bs.collapse', () => icon.className = 'bi bi-chevron-up');
+            collapseEl.addEventListener('hide.bs.collapse', () => icon.className = 'bi bi-chevron-down');
+        }
+    </script>
+{% endblock %}
