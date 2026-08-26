@@ -1,78 +1,123 @@
 {% extends "base.html" %}
-{% block title %}Add Task{% endblock %}
+{% block title %}New Task{% endblock %}
 {% block content %}
-    <h1>Add New Task</h1>
-    <form method="POST">
-        <div class="mb-3">
-            <label class="form-label">Title</label>
-            <input type="text" name="title" class="form-control" required>
+    <div class="page-header">
+        <h1>New Task</h1>
+        <p>Create a new task to track</p>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body p-4">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <input type="text" name="title" class="form-control {% if errors.get('title') %}is-invalid{% endif %}" required maxlength="100" value="{{ form.get('title', '') }}" placeholder="What needs to be done?">
+                            {% if errors.get('title') %}
+                                <div class="invalid-feedback">{{ errors.title }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Notes <span class="text-muted fw-normal">(optional)</span></label>
+                            <textarea name="description" class="form-control" rows="3" placeholder="Add context or details...">{{ form.get('description', '') }}</textarea>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Due Date</label>
+                                <input type="date" name="due_date" class="form-control {% if errors.get('due_date') %}is-invalid{% endif %}" required value="{{ form.get('due_date', '') }}">
+                                {% if errors.get('due_date') %}
+                                    <div class="invalid-feedback">{{ errors.due_date }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mt-4">
+                                    <input type="checkbox" name="is_recurrent" class="form-check-input" id="recurrent" {% if form.get('is_recurrent') %}checked{% endif %}>
+                                    <label class="form-check-label fw-medium" for="recurrent">Recurring task</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4" id="recurrence-group" style="display: {% if form.get('is_recurrent') %}block{% else %}none{% endif %};">
+                            <label class="form-label">Repeat every</label>
+                            <div class="input-group" style="max-width: 200px;">
+                                <input type="number" name="recurrence_interval" class="form-control {% if errors.get('recurrence_interval') %}is-invalid{% endif %}" value="{{ form.get('recurrence_interval', '1') }}" min="1">
+                                <span class="input-group-text">days</span>
+                                {% if errors.get('recurrence_interval') %}
+                                    <div class="invalid-feedback">{{ errors.recurrence_interval }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Importance</label>
+                                <p class="text-muted small mb-2">How much this aligns with your long-term goals</p>
+                                <div class="d-flex flex-column gap-2">
+                                    {% for val in range(1, 6) %}
+                                        <label class="form-check d-flex align-items-center gap-2 p-2 rounded {{ 'bg-light' if form.get('importance') == val|string }}">
+                                            <input type="radio" name="importance" value="{{ val }}" class="form-check-input" required {% if form.get('importance') == val|string %}checked{% endif %}>
+                                            <span class="fw-medium" style="min-width: 1.5rem;">{{ val }}</span>
+                                            <small class="text-muted">{{ ['Minimal', 'Some impact', 'Important', 'Very important', 'Critical'][val - 1] }}</small>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                                {% if errors.get('importance') %}
+                                    <div class="text-danger small mt-1">{{ errors.importance }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Risk</label>
+                                <p class="text-muted small mb-2">Consequence if not completed on time</p>
+                                <div class="d-flex flex-column gap-2">
+                                    {% for val in range(1, 6) %}
+                                        <label class="form-check d-flex align-items-center gap-2 p-2 rounded {{ 'bg-light' if form.get('risk') == val|string }}">
+                                            <input type="radio" name="risk" value="{{ val }}" class="form-check-input" required {% if form.get('risk') == val|string %}checked{% endif %}>
+                                            <span class="fw-medium" style="min-width: 1.5rem;">{{ val }}</span>
+                                            <small class="text-muted">{{ ['No consequences', 'Minor inconvenience', 'Moderate impact', 'Significant impact', 'Critical impact'][val - 1] }}</small>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                                {% if errors.get('risk') %}
+                                    <div class="text-danger small mt-1">{{ errors.risk }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-plus-lg me-1"></i>Create Task
+                            </button>
+                            <a href="{{ url_for('task_list') }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="mb-3">
-            <label class="form-label">Description</label>
-            <textarea name="description" class="form-control"></textarea>
-        </div>
-        <div class="mb-3 form-check">
-            <input type="checkbox" name="is_recurrent" class="form-check-input" id="recurrent">
-            <label class="form-check-label" for="recurrent">Recurrent Task</label>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Start Date</label>
-            <input type="date" name="start_date" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Recurrence Interval (days; 0 for one-off)</label>
-            <input type="number" name="recurrence_interval" class="form-control" value="0" min="0">
-        </div>
-        <!-- Importance Selection with Criteria -->
-        <div class="mb-3">
-            <label class="form-label">Importance</label>
-            <p class="text-muted">Select the level that best describes how much this task aligns with your long-term goals.</p>
-            <div class="form-check">
-                <input type="radio" name="importance" value="1" class="form-check-input" required>
-                <label class="form-check-label">1 - Minimal impact on goals</label>
-            </div>
-            <div class="form-check">
-                <input type="radio" name="importance" value="2" class="form-check-input">
-                <label class="form-check-label">2 - Some impact, not critical</label>
-            </div>
-            <div class="form-check">
-                <input type="radio" name="importance" value="3" class="form-check-input">
-                <label class="form-check-label">3 - Important for medium-term goals</label>
-            </div>
-            <div class="form-check">
-                <input type="radio" name="importance" value="4" class="form-check-input">
-                <label class="form-check-label">4 - Very important for long-term goals</label>
-            </div>
-            <div class="form-check">
-                <input type="radio" name="importance" value="5" class="form-check-input">
-                <label class="form-check-label">5 - Critical for success</label>
+
+        <div class="col-lg-4">
+            <div class="card bg-light border-0">
+                <div class="card-body p-4">
+                    <h6 class="fw-semibold mb-3">Priority Formula</h6>
+                    <p class="small text-muted mb-2">Priority = Urgency + Importance + Risk</p>
+                    <ul class="small text-muted mb-0" style="padding-left: 1.25rem;">
+                        <li><strong>Urgency</strong>: Based on due date (overdue=5, today=4, tomorrow=3...)</li>
+                        <li><strong>Importance</strong>: Goal alignment (1-5)</li>
+                        <li><strong>Risk</strong>: Consequence of delay (1-5)</li>
+                    </ul>
+                </div>
             </div>
         </div>
-        <!-- Risk Selection with Criteria -->
-        <div class="mb-3">
-            <label class="form-label">Risk</label>
-            <p class="text-muted">Select the level that best describes the potential negative impact if this task is not completed on time.</p>
-            <div class="form-check">
-                <input type="radio" name="risk" value="1" class="form-check-input" required>
-                <label class="form-check-label">1 - No significant consequences</label>
-            </div>
-            <div class="form-check">
-                <input type="radio" name="risk" value="2" class="form-check-input">
-                <label class="form-check-label">2 - Minor inconvenience or delay</label>
-            </div>
-            <div class="form-check">
-                <input type="radio" name="risk" value="3" class="form-check-input">
-                <label class="form-check-label">3 - Moderate impact on project</label>
-            </div>
-            <div class="form-check">
-                <input type="radio" name="risk" value="4" class="form-check-input">
-                <label class="form-check-label">4 - Significant impact, affects success</label>
-            </div>
-            <div class="form-check">
-                <input type="radio" name="risk" value="5" class="form-check-input">
-                <label class="form-check-label">5 - Critical impact, could lead to failure</label>
-            </div>
-        </div>
-        <button type="submit" class="btn btn-primary">Add Task</button>
-    </form>
+    </div>
+
+    <script>
+        document.getElementById('recurrent').addEventListener('change', function() {
+            document.getElementById('recurrence-group').style.display = this.checked ? 'block' : 'none';
+        });
+    </script>
 {% endblock %}

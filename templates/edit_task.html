@@ -1,21 +1,122 @@
 {% extends "base.html" %}
-{% block title %}Edit Task - {{ task.title }}{% endblock %}
+{% block title %}Edit - {{ task.title }}{% endblock %}
 {% block content %}
-    <h1>Edit Task: "{{ task.title }}"</h1>
-    <form method="POST">
-        <div class="mb-3">
-            <label class="form-label">Task Name</label>
-            <input type="text" name="title" class="form-control" value="{{ task.title }}" required>
+    <div class="page-header">
+        <h1>Edit Task</h1>
+        <p>{{ task.title }}</p>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body p-4">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <input type="text" name="title" class="form-control {% if errors.get('title') %}is-invalid{% endif %}" required maxlength="100" value="{{ form.get('title', task.title) }}">
+                            {% if errors.get('title') %}
+                                <div class="invalid-feedback">{{ errors.title }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Notes <span class="text-muted fw-normal">(optional)</span></label>
+                            <textarea name="description" class="form-control" rows="3">{{ form.get('description', task.description or '') }}</textarea>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Due Date</label>
+                                <input type="date" name="due_date" class="form-control {% if errors.get('due_date') %}is-invalid{% endif %}" required value="{{ form.get('due_date', task.due_date.strftime('%Y-%m-%d')) }}">
+                                {% if errors.get('due_date') %}
+                                    <div class="invalid-feedback">{{ errors.due_date }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mt-4">
+                                    <input type="checkbox" name="is_recurrent" class="form-check-input" id="recurrent" {% if form.get('is_recurrent', task.is_recurrent) %}checked{% endif %}>
+                                    <label class="form-check-label fw-medium" for="recurrent">Recurring task</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4" id="recurrence-group" style="display: {% if form.get('is_recurrent', task.is_recurrent) %}block{% else %}none{% endif %};">
+                            <label class="form-label">Repeat every</label>
+                            <div class="input-group" style="max-width: 200px;">
+                                <input type="number" name="recurrence_interval" class="form-control {% if errors.get('recurrence_interval') %}is-invalid{% endif %}" value="{{ form.get('recurrence_interval', task.recurrence_interval) }}" min="1">
+                                <span class="input-group-text">days</span>
+                                {% if errors.get('recurrence_interval') %}
+                                    <div class="invalid-feedback">{{ errors.recurrence_interval }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Importance</label>
+                                <p class="text-muted small mb-2">How much this aligns with your long-term goals</p>
+                                <div class="d-flex flex-column gap-2">
+                                    {% for val in range(1, 6) %}
+                                        <label class="form-check d-flex align-items-center gap-2 p-2 rounded {{ 'bg-light' if form.get('importance', task.importance|string) == val|string }}">
+                                            <input type="radio" name="importance" value="{{ val }}" class="form-check-input" required {% if form.get('importance', task.importance|string) == val|string %}checked{% endif %}>
+                                            <span class="fw-medium" style="min-width: 1.5rem;">{{ val }}</span>
+                                            <small class="text-muted">{{ ['Minimal', 'Some impact', 'Important', 'Very important', 'Critical'][val - 1] }}</small>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                                {% if errors.get('importance') %}
+                                    <div class="text-danger small mt-1">{{ errors.importance }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Risk</label>
+                                <p class="text-muted small mb-2">Consequence if not completed on time</p>
+                                <div class="d-flex flex-column gap-2">
+                                    {% for val in range(1, 6) %}
+                                        <label class="form-check d-flex align-items-center gap-2 p-2 rounded {{ 'bg-light' if form.get('risk', task.risk|string) == val|string }}">
+                                            <input type="radio" name="risk" value="{{ val }}" class="form-check-input" required {% if form.get('risk', task.risk|string) == val|string %}checked{% endif %}>
+                                            <span class="fw-medium" style="min-width: 1.5rem;">{{ val }}</span>
+                                            <small class="text-muted">{{ ['No consequences', 'Minor inconvenience', 'Moderate impact', 'Significant impact', 'Critical impact'][val - 1] }}</small>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                                {% if errors.get('risk') %}
+                                    <div class="text-danger small mt-1">{{ errors.risk }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i>Save Changes
+                            </button>
+                            <a href="{{ url_for('task_list') }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="mb-3">
-            <label class="form-label">Due Date</label>
-            <input type="date" name="start_date" class="form-control" value="{{ task.start_date.strftime('%Y-%m-%d') }}" required>
+
+        <div class="col-lg-4">
+            <div class="card bg-light border-0">
+                <div class="card-body p-4">
+                    <h6 class="fw-semibold mb-3">Task Info</h6>
+                    <ul class="small text-muted mb-0" style="padding-left: 1.25rem;">
+                        <li>Created: {{ task.created_at.strftime('%b %d, %Y') }}</li>
+                        <li>Updated: {{ task.updated_at.strftime('%b %d, %Y') }}</li>
+                        <li>Type: {{ 'Recurrent' if task.is_recurrent else 'One-off' }}</li>
+                    </ul>
+                </div>
+            </div>
         </div>
-        <div class="mb-3">
-            <label class="form-label">Notes</label>
-            <textarea name="description" class="form-control" rows="5">{{ task.description or '' }}</textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">Save Changes</button>
-        <a href="{{ url_for('task_list') }}" class="btn btn-secondary">Cancel</a>
-    </form>
+    </div>
+
+    <script>
+        document.getElementById('recurrent').addEventListener('change', function() {
+            document.getElementById('recurrence-group').style.display = this.checked ? 'block' : 'none';
+        });
+    </script>
 {% endblock %}

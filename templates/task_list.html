@@ -1,48 +1,104 @@
 {% extends "base.html" %}
-{% block title %}Task List{% endblock %}
+{% block title %}Tasks{% endblock %}
 {% block content %}
-    <h1>Task List</h1>
-    <div class="row">
-        <!-- One-off Tasks (Left Side) -->
-        <div class="col-md-6">
+    <div class="page-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1>Tasks</h1>
+            <p>{{ task_list|length }} active task{{ 's' if task_list|length != 1 }}</p>
+        </div>
+        <a href="{{ url_for('add_task') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>New Task
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value">{{ oneoff_count }}</div>
+                <div class="stat-label">One-off</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value">{{ recurrent_count }}</div>
+                <div class="stat-label">Recurrent</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value">{{ overdue_count }}</div>
+                <div class="stat-label">Overdue</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value">{{ due_this_week_count }}</div>
+                <div class="stat-label">Due This Week</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
             <div class="card">
-                <div class="card-header">One-off Tasks</div>
-                <div class="card-body">
+                <div class="card-header">
+                    <i class="bi bi-lightning-charge me-2"></i>One-off Tasks
+                </div>
+                <div class="card-body p-0">
+                    {% set oneoff_tasks = task_list|selectattr('task.is_recurrent', 'false')|list %}
+                    {% if oneoff_tasks %}
                     <div class="table-responsive">
-                        <table class="table table-striped">
-                            <colgroup>
-                                <col style="width: 35%;"> <!-- Task Name -->
-                                <col style="width: 10%;"> <!-- Notes -->
-                                <col style="width: 30%;"> <!-- Due Date -->
-                                <col style="width: 10%;"> <!-- Priority Score -->
-                                <col style="width: 15%;"> <!-- Actions -->
-                            </colgroup>
+                        <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Task Name</th>
-                                    <th>Notes</th>
-                                    <th>Due Date</th>
-                                    <th>Priority Score</th>
-                                    <th>Actions</th>
+                                    <th>Task</th>
+                                    <th>Due</th>
+                                    <th class="text-center">Priority</th>
+                                    <th class="text-end">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for item in task_list if not item.task.is_recurrent %}
-                                    <tr {% if item.due_date < today %}class="table-danger"{% endif %}>
-                                        <td>{{ item.task.title }}</td>
+                                {% for item in oneoff_tasks %}
+                                    <tr class="{{ 'overdue-row' if item.due_date < today }}">
                                         <td>
-                                            <a href="{{ url_for('edit_task', task_id=item.task.id) }}" class="btn btn-sm btn-info">
-                                                <i class="bi bi-journal-text"></i>
+                                            <a href="{{ url_for('edit_task', task_id=item.task.id) }}" class="task-title">
+                                                {{ item.task.title }}
                                             </a>
+                                            {% if item.task.description %}
+                                                <br><small class="text-muted">{{ item.task.description[:60] }}{{ '...' if item.task.description|length > 60 }}</small>
+                                            {% endif %}
                                         </td>
-                                        <td>{{ item.due_date }}</td>
-                                        <td>{{ item.priority }}</td>
                                         <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="{{ url_for('complete_task', task_id=item.task.id) }}" class="btn btn-success btn-sm">Complete</a>
-                                                <a href="{{ url_for('delete_task', task_id=item.task.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this task?');">
-                                                    <i class="bi bi-trash"></i>
-                                                </a>
+                                            <span class="{% if item.due_date < today %}text-danger fw-semibold{% elif item.days_until_due <= 3 %}text-warning{% else %}text-secondary{% endif %}">
+                                                {{ item.due_date.strftime('%b %d') }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            {% set urgency = item.priority - item.task.importance - item.task.risk %}
+                                            {% if item.priority >= 12 %}
+                                                <span class="badge badge-priority priority-critical" title="Urgency {{ urgency }} + Importance {{ item.task.importance }} + Risk {{ item.task.risk }}">{{ item.priority }}</span>
+                                            {% elif item.priority >= 9 %}
+                                                <span class="badge badge-priority priority-high" title="Urgency {{ urgency }} + Importance {{ item.task.importance }} + Risk {{ item.task.risk }}">{{ item.priority }}</span>
+                                            {% elif item.priority >= 6 %}
+                                                <span class="badge badge-priority priority-medium" title="Urgency {{ urgency }} + Importance {{ item.task.importance }} + Risk {{ item.task.risk }}">{{ item.priority }}</span>
+                                            {% elif item.priority >= 4 %}
+                                                <span class="badge badge-priority priority-low" title="Urgency {{ urgency }} + Importance {{ item.task.importance }} + Risk {{ item.task.risk }}">{{ item.priority }}</span>
+                                            {% else %}
+                                                <span class="badge badge-priority priority-minimal" title="Urgency {{ urgency }} + Importance {{ item.task.importance }} + Risk {{ item.task.risk }}">{{ item.priority }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="d-flex gap-1 justify-content-end">
+                                                <form method="POST" action="{{ url_for('complete_task', task_id=item.task.id) }}" class="d-inline">
+                                                    <button type="submit" class="btn btn-complete btn-sm" title="Complete">
+                                                        <i class="bi bi-check-lg"></i>
+                                                    </button>
+                                                </form>
+                                                <form method="POST" action="{{ url_for('delete_task', task_id=item.task.id) }}" class="d-inline">
+                                                    <button type="submit" class="btn btn-delete btn-sm" title="Delete" onclick="return confirm('Delete this task?');">
+                                                        <i class="bi bi-trash3"></i>
+                                                    </button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>
@@ -50,54 +106,77 @@
                             </tbody>
                         </table>
                     </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-inbox"></i>
+                            <p>No one-off tasks yet</p>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
-        <!-- Recurrent Tasks (Right Side) -->
-        <div class="col-md-6">
+
+        <div class="col-lg-6">
             <div class="card">
-                <div class="card-header">Recurrent Tasks</div>
-                <div class="card-body">
+                <div class="card-header">
+                    <i class="bi bi-arrow-repeat me-2"></i>Recurrent Tasks
+                </div>
+                <div class="card-body p-0">
+                    {% set recurrent_tasks = task_list|selectattr('task.is_recurrent', 'true')|list %}
+                    {% if recurrent_tasks %}
                     <div class="table-responsive">
-                        <table class="table table-striped">
-                            <colgroup>
-                                <col style="width: 35%;"> <!-- Task Name -->
-                                <col style="width: 10%;"> <!-- Notes -->
-                                <col style="width: 30%;"> <!-- Next Due Date -->
-                                <col style="width: 10%;"> <!-- Priority Score -->
-                                <col style="width: 15%;"> <!-- Actions -->
-                            </colgroup>
+                        <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Task Name</th>
-                                    <th>Notes</th>
-                                    <th>Next Due Date</th>
-                                    <th>Priority Score</th>
-                                    <th>Actions</th>
+                                    <th>Task</th>
+                                    <th>Next Due</th>
+                                    <th class="text-center">Priority</th>
+                                    <th class="text-end">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for item in task_list if item.task.is_recurrent %}
-                                    <tr {% if item.due_date < today %}class="table-danger"{% endif %}>
+                                {% for item in recurrent_tasks %}
+                                    <tr class="{{ 'overdue-row' if item.due_date < today }}">
                                         <td>
-                                            {% if item.days_until_due >= 0 and item.days_until_due < 8 %}
-                                                <i class="bi bi-exclamation-triangle text-danger"></i>
+                                            {% if item.days_until_due >= 0 and item.days_until_due <= 7 %}
+                                                <span class="due-soon-indicator"></span>
                                             {% endif %}
-                                            {{ item.task.title }}
-                                        </td>
-                                        <td>
-                                            <a href="{{ url_for('edit_task', task_id=item.task.id) }}" class="btn btn-sm btn-info">
-                                                <i class="bi bi-journal-text"></i>
+                                            <a href="{{ url_for('edit_task', task_id=item.task.id) }}" class="task-title">
+                                                {{ item.task.title }}
                                             </a>
+                                            <br><small class="text-muted">Every {{ item.task.recurrence_interval }}d</small>
                                         </td>
-                                        <td>{{ item.due_date }}</td>
-                                        <td>{{ item.priority }}</td>
                                         <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="{{ url_for('complete_task', task_id=item.task.id) }}" class="btn btn-success btn-sm">Complete</a>
-                                                <a href="{{ url_for('delete_task', task_id=item.task.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this task?');">
-                                                    <i class="bi bi-trash"></i>
-                                                </a>
+                                            <span class="{% if item.due_date < today %}text-danger fw-semibold{% elif item.days_until_due <= 3 %}text-warning{% else %}text-secondary{% endif %}">
+                                                {{ item.due_date.strftime('%b %d') }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            {% set urgency = item.priority - item.task.importance - item.task.risk %}
+                                            {% if item.priority >= 12 %}
+                                                <span class="badge badge-priority priority-critical" title="Urgency {{ urgency }} + Importance {{ item.task.importance }} + Risk {{ item.task.risk }}">{{ item.priority }}</span>
+                                            {% elif item.priority >= 9 %}
+                                                <span class="badge badge-priority priority-high" title="Urgency {{ urgency }} + Importance {{ item.task.importance }} + Risk {{ item.task.risk }}">{{ item.priority }}</span>
+                                            {% elif item.priority >= 6 %}
+                                                <span class="badge badge-priority priority-medium" title="Urgency {{ urgency }} + Importance {{ item.task.importance }} + Risk {{ item.task.risk }}">{{ item.priority }}</span>
+                                            {% elif item.priority >= 4 %}
+                                                <span class="badge badge-priority priority-low" title="Urgency {{ urgency }} + Importance {{ item.task.importance }} + Risk {{ item.task.risk }}">{{ item.priority }}</span>
+                                            {% else %}
+                                                <span class="badge badge-priority priority-minimal" title="Urgency {{ urgency }} + Importance {{ item.task.importance }} + Risk {{ item.task.risk }}">{{ item.priority }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="d-flex gap-1 justify-content-end">
+                                                <form method="POST" action="{{ url_for('complete_task', task_id=item.task.id) }}" class="d-inline">
+                                                    <button type="submit" class="btn btn-complete btn-sm" title="Complete">
+                                                        <i class="bi bi-check-lg"></i>
+                                                    </button>
+                                                </form>
+                                                <form method="POST" action="{{ url_for('delete_task', task_id=item.task.id) }}" class="d-inline">
+                                                    <button type="submit" class="btn btn-delete btn-sm" title="Delete" onclick="return confirm('Delete this task?');">
+                                                        <i class="bi bi-trash3"></i>
+                                                    </button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>
@@ -105,6 +184,12 @@
                             </tbody>
                         </table>
                     </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-inbox"></i>
+                            <p>No recurrent tasks yet</p>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
