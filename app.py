@@ -310,7 +310,9 @@ def edit_task(task_id):
             db.session.rollback()
             errors['title'] = 'Failed to save changes. Please try again.'
             return render_template('edit_task.html', task=task, is_home=False, errors=errors, form=request.form)
-        return redirect(url_for('task_list'))
+        if task.is_recurrent:
+            return redirect(url_for('task_list'))
+        return redirect(url_for('view_task', task_id=task.id))
     return render_template('edit_task.html', task=task, is_home=False, errors={}, form={})
 
 
