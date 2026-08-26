@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date, timedelta
 from markupsafe import Markup, escape
@@ -342,6 +342,37 @@ def delete_completion(completion_id):
     except Exception:
         db.session.rollback()
     return redirect(url_for('completed_tasks'))
+
+
+@app.route('/api/due_tasks')
+def api_due_tasks():
+    today = date.today()
+    tasks = Task.query.filter(
+        Task.is_completed == False,
+        Task.is_recurrent == False,
+        Task.due_date <= today + timedelta(days=7),
+    ).order_by(Task.due_date.asc()).all()
+    result = []
+    for t in tasks:
+        days_left = (t.due_date - today).days
+        if days_left < 0:
+            status = f"Overdue by {abs(days_left)}d"
+        elif days_left == 0:
+            status = "Due today"
+        elif days_left == 1:
+            status = "Due tomorrow"
+        else:
+            status = f"Due in {days_left}d"
+        result.append({
+            'title': t.title,
+            'due_date': t.due_date.isoformat(),
+            'status': status,
+            'is_recurrent': t.is_recurrent,
+            'urgency': get_urgency(t.due_date, today),
+        })
+    response = jsonify(result)
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
 
 
 if __name__ == '__main__':
