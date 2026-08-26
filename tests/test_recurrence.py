@@ -105,6 +105,23 @@ class TestRecurrentCompletion:
         updated_task = db.session.get(Task, task.id)
         assert updated_task.due_date == today + timedelta(days=30)
 
+    def test_complete_recurrent_creates_oneoff_copy(self, client):
+        today = date.today()
+        task = Task(title="Recurrent", due_date=today, importance=3, risk=2,
+                    is_recurrent=True, recurrence_interval=7, description="desc")
+        db.session.add(task)
+        db.session.commit()
+
+        client.post(f"/complete_task/{task.id}")
+
+        oneoffs = Task.query.filter_by(is_recurrent=False, title="Recurrent").all()
+        assert len(oneoffs) == 1
+        assert oneoffs[0].is_completed is True
+        assert oneoffs[0].due_date == today
+        assert oneoffs[0].importance == 3
+        assert oneoffs[0].risk == 2
+        assert oneoffs[0].recurrence_interval == 0
+
 
 class TestDeleteTask:
     def test_delete_task_removes_completions(self, client):

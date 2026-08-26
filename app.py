@@ -200,6 +200,17 @@ def complete_task(task_id):
         db.session.add(completion)
 
         if task.is_recurrent and task.recurrence_interval > 0:
+            one_off = Task(
+                title=task.title,
+                description=task.description,
+                is_recurrent=False,
+                due_date=current_due_date,
+                recurrence_interval=0,
+                importance=task.importance,
+                risk=task.risk,
+                is_completed=True,
+            )
+            db.session.add(one_off)
             task.due_date = current_due_date + timedelta(days=task.recurrence_interval)
             task.updated_at = datetime.utcnow()
         else:
