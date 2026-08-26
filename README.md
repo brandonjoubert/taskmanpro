@@ -1,119 +1,122 @@
 # Taskman Pro
 
-## Description
+A simple task management application that prioritizes work based on urgency, importance, and risk.
 
-Taskman Pro is a simple web-based task management application built with Python and Flask. It allows users to manage both one-off and recurrent tasks, prioritizing them based on urgency, importance, and risk.
+## How It Works
 
-## Features
+1. **You state the task, due date, importance, and risk.**
+2. **Taskman Pro calculates urgency automatically and ranks your workload.**
 
-*   **Task Management:** Add, view, edit, complete, and delete tasks.
-*   **Task Types:** Supports both one-off tasks and recurrent tasks with configurable intervals (in days).
-*   **Prioritization:** Automatically calculates a priority score based on:
-    *   **Urgency:** How soon the task is due.
-    *   **Importance:** User-defined importance score.
-    *   **Risk:** User-defined risk score associated with not completing the task.
-*   **Task List:** Displays separate lists for one-off and recurrent tasks, sorted by priority and due date. Highlights overdue tasks and tasks due soon.
-*   **Completion Tracking:** Tracks completed task instances (for history, viewable on a separate page). Recurrent tasks automatically advance to their next due date upon completion.
-*   **Web Interface:** Simple and clean interface using Bootstrap 5.
-*   **Home Page:** Displays application information and branding.
-*   **Shutdown:** Includes a simple mechanism to stop the Flask development server via a link in the navigation bar.
+### Priority Formula
+
+```
+Priority = Urgency + Importance + Risk
+```
+
+- **Urgency** (automatic): 5 = overdue, 4 = today, 3 = tomorrow, 2 = within 3 days, 1 = later
+- **Importance** (you choose): 1-5 scale from "minimal impact" to "critical for success"
+- **Risk** (you choose): 1-5 scale from "no consequences" to "critical impact"
+
+Priority range: 3 (lowest) to 15 (highest).
+
+Tasks are sorted by priority (highest first), then due date (earliest first), then task ID (lowest first).
+
+### Task Types
+
+- **One-off tasks**: Complete once, then done.
+- **Recurrent tasks**: Complete to advance the next due date by the configured interval. Recurrence anchors from the scheduled due date, not the completion date.
+
+## Installation
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd taskmanpro
+
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate  # Linux/macOS
+# .\venv\Scripts\activate  # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+python app.py
+```
+
+The app starts at `http://localhost:5000` and redirects to the task list.
+
+## Development
+
+Enable debug mode:
+
+```bash
+FLASK_DEBUG=1 python app.py
+```
+
+Run tests:
+
+```bash
+pip install pytest
+python -m pytest tests/ -v
+```
+
+## Security
+
+- All state-changing operations use POST (complete, delete, edit).
+- User input is HTML-escaped before rendering.
+- Debug mode is disabled by default.
+- Server-side validation on all inputs.
+- No browser-accessible shutdown endpoint.
 
 ## Project Structure
 
 ```
-/home/brandon/taskman_pro/
-├── app.py                  # Main Flask application file (routes, logic, DB models)
-├── launch_taskman_pro.sh   # Script to activate venv and run the app
-├── flask_output.log        # Log file for background process output (created by launch script)
-├── icon.png                # Application icon (not currently used by web app)
-├── taskman.jpg             # Image file (moved to static/) - Should be in static/
-├── README.md               # This file
-├── instance/
-│   └── tasks.db            # SQLite database file (created automatically)
-├── static/
-│   └── taskman.jpg         # Static image file for the home page
-├── templates/
-│   ├── base.html           # Base HTML template with navbar and structure
-│   ├── index.html          # Home page template
-│   ├── task_list.html      # Template for displaying task lists
-│   ├── add_task.html       # Template for the add task form
-│   ├── edit_task.html      # Template for the edit task form
-│   └── completed_tasks.html # Template for viewing completion history
-└── venv/                   # Python virtual environment directory
+taskmanpro/
+├── app.py              # Flask application (routes, models, validation)
+├── requirements.txt    # Python dependencies
+├── templates/          # Jinja2 HTML templates
+├── static/             # Static assets
+├── tests/              # Automated test suite
+│   ├── test_priority.py      # Urgency and priority calculation
+│   ├── test_sorting.py       # Task list ordering
+│   ├── test_recurrence.py    # Completion and recurrence behavior
+│   ├── test_validation.py    # Server-side input validation
+│   └── test_security.py      # POST-only mutations, XSS prevention
+└── instance/
+    └── tasks.db        # SQLite database (auto-created)
 ```
 
-## Setup Instructions
+## Database Schema
 
-1.  **Prerequisites:**
-    *   Python 3 installed.
-    *   `pip` (Python package installer) installed.
-    *   A web browser (e.g., Google Chrome, Firefox).
+### Task
 
-2.  **Get the Code:** Obtain the project files (e.g., clone the repository or copy the directory). Ensure you have all files *except* the `venv` directory and potentially the `instance` directory (the database will be recreated).
+| Column | Type | Description |
+|---|---|---|
+| id | INTEGER | Primary key |
+| title | VARCHAR(100) | Task name |
+| description | TEXT | Optional notes |
+| is_recurrent | BOOLEAN | Recurrent task flag |
+| due_date | DATE | Next due date |
+| recurrence_interval | INTEGER | Days between occurrences (0 = one-off) |
+| importance | INTEGER | 1-5 importance rating |
+| risk | INTEGER | 1-5 risk rating |
+| is_completed | BOOLEAN | Permanent completion flag (one-off only) |
+| created_at | DATETIME | Creation timestamp |
+| updated_at | DATETIME | Last update timestamp |
 
-3.  **Navigate to Project Directory:**
-    ```bash
-    cd /path/to/taskman_pro
-    ```
-    (Replace `/path/to/` with the actual path, e.g., `/home/brandon/`)
+### Completion
 
-4.  **Create Virtual Environment:** It's highly recommended to use a virtual environment to isolate dependencies.
-    ```bash
-    python3 -m venv venv
-    ```
+| Column | Type | Description |
+|---|---|---|
+| id | INTEGER | Primary key |
+| task_id | INTEGER | Foreign key to task |
+| scheduled_due_date | DATE | Which occurrence was satisfied |
+| completed_at | DATETIME | When the user completed it |
 
-5.  **Activate Virtual Environment:**
-    *   On Linux/macOS:
-        ```bash
-        source venv/bin/activate
-        ```
-    *   On Windows:
-        ```bash
-        .\venv\Scripts\activate
-        ```
-    You should see `(venv)` prepended to your command prompt.
+## Author
 
-6.  **Install Dependencies:** Install the required Python packages.
-    ```bash
-    pip install Flask Flask-SQLAlchemy
-    ```
+Brandon Joubert
 
-## Running the Application
-
-There are two main ways to run the application:
-
-**Method 1: Using the Launch Script (Recommended for background running)**
-
-This script activates the environment, starts the Flask server in the background (`nohup`), logs output to `flask_output.log`, and attempts to open the application in Google Chrome.
-
-```bash
-./launch_taskman_pro.sh
-```
-*Note: Ensure the script has execute permissions (`chmod +x launch_taskman_pro.sh`).*
-
-**Method 2: Running Manually (Foreground, shows output directly)**
-
-1.  Ensure the virtual environment is activated (`source venv/bin/activate`).
-2.  Run the Flask development server:
-    ```bash
-    python app.py
-    ```
-3.  The application will be available at `http://localhost:5000` in your web browser. Press `Ctrl+C` in the terminal to stop the server.
-
-## Dependencies
-
-*   **Python 3**
-*   **Flask**: Web framework.
-*   **Flask-SQLAlchemy**: SQLAlchemy integration for Flask (database ORM).
-*   **SQLAlchemy**: Database toolkit (installed as a dependency of Flask-SQLAlchemy).
-
-These are installed via `pip install Flask Flask-SQLAlchemy`.
-
-## Database
-
-The application uses a SQLite database file named `tasks.db` located in the `instance` subdirectory. This file is created automatically by Flask/SQLAlchemy the first time the application is run (`db.create_all()` in `app.py`).
-
-## Author & Copyright
-
-*   **Author:** Brandon Joubert
-*   **Copyright:** &copy; 2024 Gensix Technology. All rights reserved. (Year dynamically updated)
+&copy; 2026 Gensix Technology. All rights reserved.

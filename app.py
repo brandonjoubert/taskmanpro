@@ -1,7 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, Response
+from flask import Flask, render_template, request, redirect, url_for, Response, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date, timedelta
-from markupsafe import Markup
+from markupsafe import Markup, escape
 import os
 
 app = Flask(__name__)
@@ -9,47 +9,47 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tasks.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# Custom nl2br filter for line breaks
+
 def nl2br(value):
     if value is None:
         return ''
-    return Markup(value.replace('\n', '<br>'))
+    return Markup(str(escape(value)).replace('\n', '<br>'))
+
 
 app.jinja_env.filters['nl2br'] = nl2br
+
 
 class Task(db.Model):
     id = db.Column(db.types.Integer, primary_key=True)
     title = db.Column(db.types.String(100), nullable=False)
     description = db.Column(db.types.String)
     is_recurrent = db.Column(db.types.Boolean, default=False)
-    start_date = db.Column(db.types.Date, nullable=False)
+    due_date = db.Column(db.types.Date, nullable=False)
     recurrence_interval = db.Column(db.types.Integer, default=0)
     importance = db.Column(db.types.Integer, nullable=False)
     risk = db.Column(db.types.Integer, nullable=False)
-    is_completed = db.Column(db.types.Boolean, default=False, nullable=False) # Added flag for non-recurrent task completion
+    is_completed = db.Column(db.types.Boolean, default=False, nullable=False)
     created_at = db.Column(db.types.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.types.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    completions = db.relationship('Completion', backref='task', lazy=True, cascade="all, delete-orphan") # Added cascade delete
+    completions = db.relationship('Completion', backref='task', lazy=True, cascade="all, delete-orphan")
+
 
 class Completion(db.Model):
     id = db.Column(db.types.Integer, primary_key=True)
     task_id = db.Column(db.types.Integer, db.ForeignKey('task.id'), nullable=False)
-    completion_date = db.Column(db.types.Date, nullable=False)
+    scheduled_due_date = db.Column(db.types.Date, nullable=False)
+    completed_at = db.Column(db.types.DateTime, nullable=False)
+
 
 def get_effective_due_date(task, today):
-    """Calculates the effective due date for a task."""
     if task.is_recurrent and task.recurrence_interval > 0:
-        # For recurrent tasks, the start_date always represents the next due date
-        return task.start_date
+        return task.due_date
     else:
-        # For non-recurrent tasks, check the permanent completed flag first
         if task.is_completed:
-             return None # Permanently completed
-        # Original check based on completion record (can likely be removed if is_completed flag is reliable)
-        # elif Completion.query.filter_by(task_id=task.id, completion_date=task.start_date).first():
-        #     return None  # Completed for this specific date (less relevant now)
+            return None
         else:
-            return task.start_date # Not completed
+            return task.due_date
+
 
 def get_urgency(due_date, today):
     if due_date < today:
@@ -63,10 +63,73 @@ def get_urgency(due_date, today):
     else:
         return 1
 
+
+def validate_task_form(form):
+    errors = {}
+    title = form.get('title', '').strip()
+    if not title:
+        errors['title'] = 'Title is required.'
+    elif len(title) > 100:
+        errors['title'] = 'Title must be 100 characters or fewer.'
+
+    due_date_str = form.get('due_date', '')
+    due_date = None
+    if not due_date_str:
+        errors['due_date'] = 'Due date is required.'
+    else:
+        try:
+            due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            errors['due_date'] = 'Invalid date format.'
+
+    importance_str = form.get('importance', '')
+    try:
+        importance = int(importance_str)
+        if importance < 1 or importance > 5:
+            errors['importance'] = 'Importance must be between 1 and 5.'
+    except (ValueError, TypeError):
+        errors['importance'] = 'Importance is required.'
+        importance = None
+
+    risk_str = form.get('risk', '')
+    try:
+        risk = int(risk_str)
+        if risk < 1 or risk > 5:
+            errors['risk'] = 'Risk must be between 1 and 5.'
+    except (ValueError, TypeError):
+        errors['risk'] = 'Risk is required.'
+        risk = None
+
+    is_recurrent = 'is_recurrent' in form
+    recurrence_interval = 0
+    if is_recurrent:
+        try:
+            recurrence_interval = int(form.get('recurrence_interval', '0'))
+            if recurrence_interval < 1:
+                errors['recurrence_interval'] = 'Recurrence interval must be at least 1 day for recurrent tasks.'
+        except (ValueError, TypeError):
+            errors['recurrence_interval'] = 'Invalid recurrence interval.'
+
+    description = form.get('description', '').strip() or None
+
+    if errors:
+        return None, errors
+
+    return {
+        'title': title,
+        'description': description,
+        'is_recurrent': is_recurrent,
+        'due_date': due_date,
+        'recurrence_interval': recurrence_interval,
+        'importance': importance,
+        'risk': risk,
+    }, {}
+
+
 @app.route('/')
 def index():
-    current_year = datetime.utcnow().year
-    return render_template('index.html', current_year=current_year, is_home=True)
+    return redirect(url_for('task_list'))
+
 
 @app.route('/tasks')
 def task_list():
@@ -83,99 +146,102 @@ def task_list():
                 'task': task,
                 'due_date': due_date,
                 'priority': priority,
-                'days_until_due': days_until_due
+                'days_until_due': days_until_due,
             })
-    task_list.sort(key=lambda x: (-x['priority'], x['due_date']))
+    task_list.sort(key=lambda x: (-x['priority'], x['due_date'], x['task'].id))
     return render_template('task_list.html', task_list=task_list, today=today, is_home=False)
+
 
 @app.route('/add_task', methods=['GET', 'POST'])
 def add_task():
     if request.method == 'POST':
-        title = request.form['title']
-        description = request.form['description']
-        is_recurrent = 'is_recurrent' in request.form
-        start_date = datetime.strptime(request.form['start_date'], '%Y-%m-%d').date()
-        recurrence_interval = int(request.form['recurrence_interval']) if is_recurrent else 0
-        importance = int(request.form['importance'])
-        risk = int(request.form['risk'])
+        data, errors = validate_task_form(request.form)
+        if errors:
+            return render_template('add_task.html', is_home=False, errors=errors, form=request.form)
         new_task = Task(
-            title=title,
-            description=description,
-            is_recurrent=is_recurrent,
-            start_date=start_date,
-            recurrence_interval=recurrence_interval,
-            importance=importance,
-            risk=risk
+            title=data['title'],
+            description=data['description'],
+            is_recurrent=data['is_recurrent'],
+            due_date=data['due_date'],
+            recurrence_interval=data['recurrence_interval'],
+            importance=data['importance'],
+            risk=data['risk'],
         )
         db.session.add(new_task)
         db.session.commit()
         return redirect(url_for('task_list'))
-    return render_template('add_task.html', is_home=False)
+    return render_template('add_task.html', is_home=False, errors={}, form={})
 
-@app.route('/complete_task/<int:task_id>')
+
+@app.route('/complete_task/<int:task_id>', methods=['POST'])
 def complete_task(task_id):
     task = Task.query.get_or_404(task_id)
     today = date.today()
-    current_due_date = get_effective_due_date(task, today) # Get the date being completed
+    current_due_date = get_effective_due_date(task, today)
 
-    if current_due_date: # Ensure the task isn't already considered completed for this cycle
-        # Add completion record for history
-        completion = Completion(task_id=task.id, completion_date=current_due_date)
+    if current_due_date:
+        completion = Completion(
+            task_id=task.id,
+            scheduled_due_date=current_due_date,
+            completed_at=datetime.utcnow(),
+        )
         db.session.add(completion)
 
-        # If recurrent, update the task's start_date to the next occurrence
         if task.is_recurrent and task.recurrence_interval > 0:
-            next_due_date = current_due_date + timedelta(days=task.recurrence_interval)
-            task.start_date = next_due_date
-            task.updated_at = datetime.utcnow() # Update timestamp
+            task.due_date = current_due_date + timedelta(days=task.recurrence_interval)
+            task.updated_at = datetime.utcnow()
         else:
-            # If non-recurrent, mark it as permanently completed
             task.is_completed = True
-            task.updated_at = datetime.utcnow() # Update timestamp
+            task.updated_at = datetime.utcnow()
 
         db.session.commit()
 
     return redirect(url_for('task_list'))
+
 
 @app.route('/edit_task/<int:task_id>', methods=['GET', 'POST'])
 def edit_task(task_id):
     task = Task.query.get_or_404(task_id)
     if request.method == 'POST':
-        task.title = request.form['title']
-        task.start_date = datetime.strptime(request.form['start_date'], '%Y-%m-%d').date()
-        task.description = request.form['description']
+        data, errors = validate_task_form(request.form)
+        if errors:
+            return render_template('edit_task.html', task=task, is_home=False, errors=errors, form=request.form)
+        task.title = data['title']
+        task.description = data['description']
+        task.is_recurrent = data['is_recurrent']
+        task.due_date = data['due_date']
+        task.recurrence_interval = data['recurrence_interval']
+        task.importance = data['importance']
+        task.risk = data['risk']
+        task.updated_at = datetime.utcnow()
         db.session.commit()
         return redirect(url_for('task_list'))
-    return render_template('edit_task.html', task=task, is_home=False)
+    return render_template('edit_task.html', task=task, is_home=False, errors={}, form={})
 
-@app.route('/delete_task/<int:task_id>')
+
+@app.route('/delete_task/<int:task_id>', methods=['POST'])
 def delete_task(task_id):
     task = Task.query.get_or_404(task_id)
-    # Deleting the task will now automatically delete associated completions due to cascade="all, delete-orphan"
-    # Completion.query.filter_by(task_id=task.id).delete() # No longer needed
     db.session.delete(task)
     db.session.commit()
     return redirect(url_for('task_list'))
 
+
 @app.route('/completed_tasks')
 def completed_tasks():
-    completions = Completion.query.all()
+    completions = Completion.query.order_by(Completion.completed_at.desc()).all()
     return render_template('completed_tasks.html', completions=completions, is_home=False)
 
-@app.route('/delete_completion/<int:completion_id>')
+
+@app.route('/delete_completion/<int:completion_id>', methods=['POST'])
 def delete_completion(completion_id):
     completion = Completion.query.get_or_404(completion_id)
     db.session.delete(completion)
     db.session.commit()
     return redirect(url_for('completed_tasks'))
 
-@app.route('/shutdown', methods=['GET'])
-def shutdown():
-    # Simple shutdown by exiting the process
-    os._exit(0)  # Forcefully terminates the Flask server process
-    return "Server shutting down..."
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    app.run(debug=os.environ.get('FLASK_DEBUG', '0') == '1')
