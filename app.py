@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, Response, flash
+from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date, timedelta
 from markupsafe import Markup, escape
 import os
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24).hex())
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tasks.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -168,7 +169,12 @@ def add_task():
             risk=data['risk'],
         )
         db.session.add(new_task)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            errors['title'] = 'Failed to save task. Please try again.'
+            return render_template('add_task.html', is_home=False, errors=errors, form=request.form)
         return redirect(url_for('task_list'))
     return render_template('add_task.html', is_home=False, errors={}, form={})
 
@@ -180,6 +186,12 @@ def complete_task(task_id):
     current_due_date = get_effective_due_date(task, today)
 
     if current_due_date:
+        existing = Completion.query.filter_by(
+            task_id=task.id, scheduled_due_date=current_due_date
+        ).first()
+        if existing:
+            return redirect(url_for('task_list'))
+
         completion = Completion(
             task_id=task.id,
             scheduled_due_date=current_due_date,
@@ -194,7 +206,10 @@ def complete_task(task_id):
             task.is_completed = True
             task.updated_at = datetime.utcnow()
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
     return redirect(url_for('task_list'))
 
@@ -214,7 +229,12 @@ def edit_task(task_id):
         task.importance = data['importance']
         task.risk = data['risk']
         task.updated_at = datetime.utcnow()
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            errors['title'] = 'Failed to save changes. Please try again.'
+            return render_template('edit_task.html', task=task, is_home=False, errors=errors, form=request.form)
         return redirect(url_for('task_list'))
     return render_template('edit_task.html', task=task, is_home=False, errors={}, form={})
 
@@ -223,7 +243,10 @@ def edit_task(task_id):
 def delete_task(task_id):
     task = Task.query.get_or_404(task_id)
     db.session.delete(task)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
     return redirect(url_for('task_list'))
 
 
@@ -237,7 +260,10 @@ def completed_tasks():
 def delete_completion(completion_id):
     completion = Completion.query.get_or_404(completion_id)
     db.session.delete(completion)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
     return redirect(url_for('completed_tasks'))
 
 
