@@ -138,7 +138,7 @@ def task_list():
     tasks = Task.query.all()
 
     for task in tasks:
-        if task.is_recurrent and task.due_date and task.due_date <= today:
+        if task.is_recurrent and task.due_date and task.due_date <= today + timedelta(days=7):
             existing = Task.query.filter_by(
                 title=task.title,
                 is_recurrent=False,
