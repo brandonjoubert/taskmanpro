@@ -10,9 +10,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tasks.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-with app.app_context():
-    db.create_all()
-
 
 def nl2br(value):
     if value is None:
@@ -348,4 +345,6 @@ def delete_completion(completion_id):
 
 
 if __name__ == '__main__':
-    app.run(debug=os.environ.get('FLASK_DEBUG', '0') == '1')
+    with app.app_context():
+        db.create_all()
+    app.run(host='0.0.0.0', port=5001, debug=os.environ.get('FLASK_DEBUG', '0') == '1')
